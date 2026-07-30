@@ -1,0 +1,18 @@
+{
+  "name": "media-parser-worker",
+  "version": "3.0.0",
+  "private": true,
+  "description": "多平台媒体解析工具 - Cloudflare Worker (ParserFactory架构)",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --legal-comments=none",
+    "dev": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --watch --legal-comments=none",
+    "build:minify": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --minify --legal-comments=none",
+    "copy:dist": "node -e \"require('fs').mkdirSync('dist',{recursive:true});['index.html','video.html','music.html','option.html','_routes.json'].forEach(f=>require('fs').cpSync(f,'dist/'+f))\"",
+    "build:dist": "npm run build && npm run copy:dist",
+    "deploy": "npm run build:dist && node -e \"const f=require('fs'),p='../dash';try{f.rmSync(p,{recursive:true})}catch(e){}f.mkdirSync(p,{recursive:true});f.cpSync('dist','../dash',{recursive:true});console.log('部署文件已准备到 dash/ 目录');f.readdirSync('dist').forEach(fn=>console.log('  - '+fn))\""
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

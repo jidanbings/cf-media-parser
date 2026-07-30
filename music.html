@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽水音乐解析 - 视频解析工具</title>
+    <style>
+        :root {
+            --primary-color: #00c6fb;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --text-color: #1a1a1a;
+            --text-muted: #888;
+            --bg-white: #ffffff;
+            --bg-gray: #f5f7fa;
+            --border-color: #e5e7eb;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --transition-fast: all 0.2s ease;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-gray); min-height: 100vh; padding: 20px; }
+        .container { background: var(--bg-white); border-radius: var(--radius-xl); padding: 32px; max-width: 99vw; width: 99%; max-width: 800px; margin: 0 auto; box-shadow: var(--shadow-md); }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .header h1 { font-size: 24px; color: var(--text-color); margin: 0; font-weight: 600; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-back { padding: 10px 20px; background: rgba(0,0,0,0.04); color: #555; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 14px; cursor: pointer; transition: var(--transition-fast); }
+        .btn-back:hover { background: rgba(0,0,0,0.08); }
+        .btn-logout { padding: 10px 20px; background: rgba(220,53,69,0.08); color: var(--danger-color); border: 1px solid rgba(220,53,69,0.2); border-radius: var(--radius-md); font-size: 14px; cursor: pointer; transition: var(--transition-fast); }
+        .btn-logout:hover { background: rgba(220,53,69,0.15); }
+        
+        .input-group { margin-bottom: 24px; }
+        .input-row { display: flex; gap: 12px; align-items: center; width: 100%; }
+        .input-wrapper { flex: 1; position: relative; border: 1.5px solid var(--border-color); border-radius: 14px; transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+        .input-wrapper:focus-within { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(0, 198, 251, 0.12); }
+        .input-row input[type="text"] { width: 100%; padding: 16px 80px 16px 18px; border: none; border-radius: 14px; font-size: 15px; outline: none; background: transparent; }
+        .btn-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 8px 14px; border: none; background: rgba(220,53,69,0.1); color: var(--danger-color); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; display: none; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+        .btn-clear:hover { background: rgba(220,53,69,0.2); }
+        .btn-parse { padding: 16px 28px; background: linear-gradient(135deg, var(--primary-color), #005bea); color: #fff; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition-fast); min-height: 52px; min-width: 100px; }
+        .btn-parse:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 198, 251, 0.4); }
+        .btn-parse:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        
+        .loading { display: none; text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading.active { display: block; }
+        .loading .spinner { width: 40px; height: 40px; border: 3px solid rgba(0, 198, 251, 0.3); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .result { display: none; margin-top: 28px; }
+        .result.active { display: block; }
+        .error-box { background: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.2); border-radius: var(--radius-lg); padding: 20px; margin-top: 16px; color: var(--danger-color); font-size: 14px; }
+        .music-card { background: #fafafa; border-radius: var(--radius-xl); padding: 24px; margin-bottom: 20px; border: 1px solid #f0f0f0; }
+        .music-header { display: flex; gap: 20px; align-items: flex-start; }
+        .music-cover { width: 150px; height: 150px; border-radius: var(--radius-lg); object-fit: cover; flex-shrink: 0; background: linear-gradient(135deg, var(--primary-color), #005bea); }
+        .music-meta { flex: 1; min-width: 0; }
+        .music-title { font-size: 20px; font-weight: 600; color: var(--text-color); margin-bottom: 10px; line-height: 1.5; }
+        .music-author { font-size: 15px; color: var(--text-muted); margin-bottom: 16px; }
+        .platform-tag { display: inline-block; padding: 5px 14px; border-radius: 16px; font-size: 13px; font-weight: 600; background: rgba(0, 198, 251, 0.1); color: var(--primary-color); }
+        
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+        .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: var(--transition-fast); border: none; text-decoration: none; min-height: 44px; }
+        .action-btn.primary { background: linear-gradient(135deg, var(--primary-color), #005bea); color: #fff; }
+        .action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 198, 251, 0.4); }
+        .action-btn.success { background: rgba(40,167,69,0.1); color: var(--success-color); border: 1px solid rgba(40,167,69,0.2); }
+        .action-btn.success:hover { background: rgba(40,167,69,0.18); }
+        .action-btn:disabled { opacity: .4; cursor: not-allowed; }
+        
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--text-color); color: #fff; padding: 12px 24px; border-radius: var(--radius-md); font-size: 14px; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        
+        @media(max-width: 768px) {
+            body { padding: 8px; }
+            .container { padding: 20px; border-radius: 16px; }
+            .header h1 { font-size: 22px; }
+            .btn-back, .btn-logout { padding: 10px 16px; font-size: 13px; }
+            .input-row input[type="text"] { padding: 14px 75px 14px 14px; font-size: 14px; min-height: 48px; }
+            .btn-parse { padding: 14px 24px; font-size: 14px; min-height: 48px; }
+        }
+        
+        @media(max-width: 480px) {
+            .container { padding: 16px; border-radius: 12px; }
+            .header { flex-wrap: wrap; gap: 12px; }
+            .header h1 { font-size: 20px; width: 100%; }
+            .header-actions { width: 100%; justify-content: flex-end; }
+            .input-row { flex-wrap: wrap; gap: 10px; }
+            .input-wrapper { width: 100%; }
+            .input-row input[type="text"] { padding: 14px 70px 14px 14px; font-size: 14px; min-height: 52px; }
+            .btn-parse { width: 100%; margin-top: 8px; }
+            .music-header { flex-wrap: wrap; gap: 16px; }
+            .music-cover { width: 100%; height: 200px; }
+            .music-title { font-size: 18px; }
+            .action-bar { gap: 8px; }
+            .action-btn { width: 100%; min-height: 48px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 汽水音乐解析</h1>
+            <div class="header-actions">
+                <button class="btn-back" onclick="goBack()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    返回
+                </button>
+                <button class="btn-logout" onclick="logout()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21h6M12 17v-4M12 10V7M21 12H3"/>
+                    </svg>
+                    退出
+                </button>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <div class="input-row">
+                <div class="input-wrapper">
+                    <input type="text" id="urlInput" placeholder="请输入汽水音乐链接..." />
+                    <button class="btn-clear" id="clearBtn" onclick="clearInput()">清除</button>
+                </div>
+                <button class="btn-parse" id="parseBtn" onclick="parseMusic()">解析</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 10px;">支持格式: https://music.douyin.com/song/xxx 或 https://www.qscmusic.com/song/xxx</p>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在解析中...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="music-card" id="musicCard">
+                <div class="music-header">
+                    <img class="music-cover" id="musicCover" src="" alt="封面" />
+                    <div class="music-meta">
+                        <h2 class="music-title" id="musicTitle"></h2>
+                        <p class="music-author" id="musicAuthor"></p>
+                        <span class="platform-tag">汽水音乐</span>
+                    </div>
+                </div>
+                <div class="action-bar" id="actionBar">
+                    <button class="action-btn primary" id="downloadBtn" onclick="downloadAudio()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        下载音频
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="error-box" id="errorBox" style="display: none;"></div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const parseBtn = document.getElementById('parseBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const errorBox = document.getElementById('errorBox');
+        const toast = document.getElementById('toast');
+        
+        let currentAudioUrl = '';
+        
+        urlInput.addEventListener('input', function() {
+            clearBtn.style.display = this.value.trim() ? 'flex' : 'none';
+        });
+        
+        function clearInput() {
+            urlInput.value = '';
+            clearBtn.style.display = 'none';
+            hideError();
+            hideResult();
+        }
+        
+        async function parseMusic() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showToast('请输入汽水音乐链接');
+                return;
+            }
+            
+            hideError();
+            hideResult();
+            showLoading();
+            parseBtn.disabled = true;
+            clearBtn.disabled = true;
+            
+            try {
+                const requestUrl = '/api/music?url=' + encodeURIComponent(String(url).trim());
+                const response = await fetch(requestUrl);
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderResult(result.data);
+                } else {
+                    showError(result.error || '解析失败');
+                }
+            } catch (e) {
+                showError('解析失败: ' + e.message);
+            } finally {
+                hideLoading();
+                parseBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        }
+        
+        function renderResult(d) {
+            document.getElementById('musicTitle').textContent = d.title || '未知歌曲';
+            document.getElementById('musicAuthor').textContent = d.author || '未知歌手';
+            
+            const cover = document.getElementById('musicCover');
+            if (d.cover) {
+                cover.src = d.cover;
+                cover.style.display = 'block';
+            } else {
+                cover.src = '';
+                cover.style.display = 'none';
+            }
+            
+            // 构建汽水音乐下载链接
+            const audioUrl = d.audio || (d.downloads && d.downloads[0]?.url) || '';
+            if (audioUrl && !audioUrl.startsWith('/admin/music')) {
+                currentAudioUrl = '/admin/music?url=' + encodeURIComponent(audioUrl) + '&filename=' + encodeURIComponent(d.author + ' - ' + d.title + '.mp3');
+            } else {
+                currentAudioUrl = audioUrl;
+            }
+            result.classList.add('active');
+        }
+        
+        function downloadAudio() {
+            if (!currentAudioUrl) {
+                showToast('暂无可下载的音频');
+                return;
+            }
+            window.open(currentAudioUrl, '_blank');
+        }
+        
+        function showLoading() { loading.classList.add('active'); }
+        function hideLoading() { loading.classList.remove('active'); }
+        function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+        function hideError() { errorBox.style.display = 'none'; }
+        function hideResult() { result.classList.remove('active'); }
+        
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        function goBack() {
+            window.location.href = '/option';
+        }
+        
+        function logout() {
+            fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
+        }
+        
+        // 回车键触发解析
+        urlInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                parseMusic();
+            }
+        });
+    </script>
+</body>
+</html>

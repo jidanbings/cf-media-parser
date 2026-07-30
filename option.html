@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择功能 - 视频解析工具</title>
+    <style>
+        :root {
+            --primary-color: #afbcbf;
+            --bg-white: #ffffff;
+            --bg-gray: #f5f7fa;
+            --text-color: #1a1a1a;
+            --text-muted: #888;
+            --border-color: #e5e7eb;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --transition-fast: all 0.2s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5fafa 0%, #f2f4f4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: var(--bg-white);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .option-card {
+            display: flex;
+            align-items: center;
+            padding: 24px;
+            background: var(--bg-gray);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            border: 2px solid transparent;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+        
+        .option-card:active {
+            transform: translateY(0);
+        }
+        
+        .option-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .option-icon.douyin {
+            background: linear-gradient(135deg, #c41aaa, #d80a0a);
+            color: white;
+        }
+        
+        .option-icon.music {
+            background: linear-gradient(135deg, #00c6fb, #507cc1);
+            color: white;
+        }
+        
+        .option-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .option-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        
+        .option-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+        }
+        
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .btn-logout:hover {
+            background: rgba(0,0,0,0.03);
+            color: var(--text-color);
+        }
+        
+        @media(max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .container {
+                padding: 28px 20px;
+            }
+            
+            .title {
+                font-size: 22px;
+            }
+            
+            .option-card {
+                padding: 20px;
+            }
+            
+            .option-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+                margin-right: 16px;
+            }
+            
+            .option-title {
+                font-size: 15px;
+            }
+            
+            .option-desc {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎬</div>
+            <h1 class="title">视频解析工具</h1>
+            <p class="subtitle">选择您要使用的功能</p>
+        </div>
+        
+        <div class="options">
+            <div class="option-card" onclick="goTo('/video')">
+                <div class="option-icon douyin">📹</div>
+                <div class="option-content">
+                    <div class="option-title">多平台媒体解析</div>
+                    <div class="option-desc">解析抖音、快手、B站、小红书、微博、TikTok、YouTube等多平台视频/图文/动图，支持无水印下载</div>
+                </div>
+            </div>
+            
+            <div class="option-card" onclick="goTo('/music')">
+                <div class="option-icon music">🎵</div>
+                <div class="option-content">
+                    <div class="option-title">汽水音乐解析</div>
+                    <div class="option-desc">解析汽水音乐链接，提取音频下载</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <button class="btn-logout" onclick="logout()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21h6M12 17v-4M12 10V7M21 12H3"/>
+                </svg>
+                退出登录
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        function goTo(path) {
+            window.location.href = path;
+        }
+        
+        function logout() {
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => {
+                    window.location.href = '/';
+                })
+                .catch(() => {
+                    window.location.href = '/';
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output (Pages deploys dist/; source code stays out of CDN)
+dist/
+_worker.js
+
+# Local deployment sync (optional: cp dist/ to parent dash/)
+../dash/
+
+# OS files
+.DS_Store
+Thumbs.db
