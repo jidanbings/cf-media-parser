@@ -79,17 +79,17 @@
 
 - 打开 https://github.com/jidanbings/cf-media-parser
 - 点击右上角 **Fork** → **Create fork**
-- 这样你就有了自己的仓库：`https://github.com/jidanbings/cf-media-parser`
+- 这样你就有了自己的仓库：`https://github.com/你的用户名/cf-media-parser`
 
 ② **把代码克隆到本地并推送到你的仓库**
 
 ```bash
 # 克隆你自己的仓库（替换为你的用户名）
-git clone https://github.com/jidanbings/cf-media-parser.git
+git clone https://github.com/你的用户名/cf-media-parser.git
 cd cf-media-parser
 
 # 如果你已经克隆了原仓库，改一下 remote 地址
-git remote set-url origin https://github.com/jidanbings/cf-media-parser.git
+git remote set-url origin https://github.com/你的用户名/cf-media-parser.git
 git push -u origin main
 ```
 
