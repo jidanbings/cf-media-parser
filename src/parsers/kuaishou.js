@@ -63,23 +63,20 @@ function extractPhotoId(url) {
 function findPhotoData(data) {
   if (!data || typeof data !== 'object') return null;
 
-  // 直接包含 photo 字段的对象
+  // 第1层: 直接包含 photo 字段的对象
   for (const key of Object.keys(data)) {
     const val = data[key];
     if (!val || typeof val !== 'object') continue;
 
-    // ATLAS 模式: 同时有 atlas + photo
     if (val.atlas && val.photo) {
       return { type: 'atlas', data: val, photo: val.photo };
     }
-
-    // APOLLO 模式: photo 有 caption/photoUrl
     if (val.caption || val.photoUrl || val.mainMvUrls || val.coverUrl) {
       return { type: 'photo', data: val, photo: val };
     }
   }
 
-  // 再搜一层（处理嵌套）
+  // 第2层: 嵌套搜索
   for (const key of Object.keys(data)) {
     const val = data[key];
     if (!val || typeof val !== 'object') continue;
@@ -88,6 +85,23 @@ function findPhotoData(data) {
       if (!v2 || typeof v2 !== 'object') continue;
       if (v2.caption || v2.photoUrl || v2.mainMvUrls) {
         return { type: 'photo', data: v2, photo: v2 };
+      }
+    }
+  }
+
+  // 第3层: 更深搜索 (Apollo state 中 Photo:xxx 可能在第2层)
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (!val || typeof val !== 'object') continue;
+    for (const k2 of Object.keys(val)) {
+      const v2 = val[k2];
+      if (!v2 || typeof v2 !== 'object') continue;
+      for (const k3 of Object.keys(v2)) {
+        const v3 = v2[k3];
+        if (!v3 || typeof v3 !== 'object') continue;
+        if (v3.caption || v3.photoUrl || v3.mainMvUrls) {
+          return { type: 'photo', data: v3, photo: v3 };
+        }
       }
     }
   }
@@ -258,6 +272,36 @@ function extractFromRegex(html, result) {
   if (result.title) result.title = result.title.replace(/\\u002F/g, '/');
   if (result.author) result.author = result.author.replace(/\\u002F/g, '/');
 
+  // 兜底：HTML 中直接搜 yximgs CDN 图片 URL（排除已用的头像）
+  if (!result.cover) {
+    const cdnUrls = html.match(/"https?:\/\/[^"]*?yximgs[^"]*?\.(?:jpg|jpeg|png|webp)"/gi);
+    if (cdnUrls) {
+      const avatarUrl = result.avatar || '';
+      for (const matched of cdnUrls) {
+        const url = matched.replace(/^"|"$/g, '').replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+        if (url !== avatarUrl) {
+          result.cover = url;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  if (!result.cover) {
+    const cdnUrls = html.match(/"https?:\/\/[^"]*?wskwai[^"]*?\.(?:jpg|jpeg|png|webp)"/gi);
+    if (cdnUrls) {
+      for (const matched of cdnUrls) {
+        const url = matched.replace(/^"|"$/g, '').replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+        const avatarUrl = result.avatar || '';
+        if (url !== avatarUrl) {
+          result.cover = url;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+
   return found;
 }
 
@@ -285,9 +329,10 @@ async function tryFetchAndExtract(url, headersConfig, result) {
 
     // 先尝试嵌入数据
     const embeddedData = extractEmbeddedData(html);
-    if (embeddedData && extractFromEmbedded(embeddedData, result)) return true;
-
-    // 正则兜底
+    // Always try embedded + regex (regex fills missing fields like cover)
+    if (embeddedData) {
+      try { extractFromEmbedded(embeddedData, result); } catch (e) { /* embedded failed, continue */ }
+    }
     return extractFromRegex(html, result);
   } catch (e) {
     return false;

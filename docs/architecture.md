@@ -2,7 +2,7 @@
 
 基于 Cloudflare Workers + Pages 构建的多平台媒体解析下载工具，支持 12 个主流平台的视频、图文、动图内容的智能识别与批量下载。
 
-**版本：** v3.2.0（B站永久放弃 + 快手优化）
+**版本：** v3.2.1（B站永久放弃 + 快手封面修复）
 **许可证：** MIT
 **源码：** [github.com/jidanbings/cf-media-parser](https://github.com/jidanbings/cf-media-parser)
 
@@ -905,6 +905,16 @@ function extractJsonObject(text, startPos) {
 ---
 
 ## 更新日志
+
+### v3.2.1（2026-07-30）— 快手封面修复
+
+**🐛 修复：**
+- **快手封面图片无法获取** — 嵌入数据中 `coverUrl` 字段可能不存在或为对象格式
+  - 增加 `normalizeUrl()` 类型守卫与 `\\/` 转义处理
+  - 嵌入数据提取后始终执行正则/HTML 兜底，不再短路返回
+  - 新增 HTML 正则直接搜索 CDN 图片 URL 作为最后保障
+- **图片代理优化** — `/api/proxy/image` 根据图片域名自动匹配 Referer
+- **前端防盗链** — 封面改为通过 Worker 代理加载
 
 ### v3.2.0（2026-07-30）— B站永久放弃 + 快手优化
 
