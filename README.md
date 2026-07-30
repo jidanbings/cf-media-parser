@@ -586,5 +586,6 @@ cf-media-parser/
 
 ## 🙏 致谢
 
+- **平台支持** — 感谢 [抖音](https://www.douyin.com/)、[快手](https://www.kuaishou.com/)、[小红书](https://www.xiaohongshu.com/)、[微博](https://weibo.com/)、[TikTok](https://www.tiktok.com/)、[YouTube](https://www.youtube.com/)、[西瓜视频](https://www.ixigua.com/)、[好看视频](https://haokan.baidu.com/)、[知乎](https://www.zhihu.com/)、[皮皮虾](https://pipix.com/)、[全民K歌](https://kg.qq.com/)、[AcFun](https://www.acfun.cn/) 等平台提供的丰富内容生态
 - [ucmao/media-parser](https://github.com/ucmao/media-parser) — ParserFactory 架构灵感来源
 - [Cloudflare Workers](https://dash.cloudflare.com/) — 强大的边缘计算平台

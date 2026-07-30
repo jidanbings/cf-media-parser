@@ -132,7 +132,21 @@ async function handleParse(request, url) {
   }
 }
 
-/** GET /api/proxy/image — 代理 CDN 防盗链图片 */
+/** GET /api/proxy/image — 代理 CDN 防盗链图片（根据域名自动匹配 Referer） */
+function getRefererForUrl(imgUrl) {
+  try {
+    const host = new URL(imgUrl).hostname;
+    if (host.includes('yximgs') || host.includes('kuaishou')) return 'https://www.kuaishou.com/';
+    if (host.includes('douyin') || host.includes('pstatp') || host.includes('toutiao')) return 'https://www.douyin.com/';
+    if (host.includes('xiaohongshu')) return 'https://www.xiaohongshu.com/';
+    if (host.includes('weibo') || host.includes('sinaimg')) return 'https://weibo.com/';
+    if (host.includes('tiktok')) return 'https://www.tiktok.com/';
+    if (host.includes('ixigua')) return 'https://www.ixigua.com/';
+    if (host.includes('acfun')) return 'https://www.acfun.cn/';
+    return 'https://www.douyin.com/';
+  } catch { return 'https://www.douyin.com/'; }
+}
+
 async function handleImageProxy(url) {
   const imgUrl = url.searchParams.get('url');
   if (!imgUrl) return json({ error: '缺少 url 参数' }, 400);
@@ -141,7 +155,7 @@ async function handleImageProxy(url) {
     const resp = await fetch(imgUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-        'Referer': 'https://www.douyin.com/',
+        'Referer': getRefererForUrl(imgUrl),
         'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9'
       },

@@ -14,10 +14,11 @@ import { createEmptyResult, buildResult } from './base.js';
 // media-parser 中的静态 Cookie (did/clientid/kpf 为关键字段)
 const KS_COOKIES = 'kpf=PC_WEB; clientid=3; did=web_bfbcdb2f5b3dc663a745deabafcf61e6; kpn=KUAISHOU_VISION';
 
-/** 标准化 URL：修复协议相对路径和 unicode 转义 */
+/** 标准化 URL：修复协议相对路径、JSON 转义、unicode 转义 */
 function normalizeUrl(url) {
-  if (!url) return '';
+  if (!url || typeof url !== 'string') return '';
   url = url.replace(/\\u002F/g, '/');
+  url = url.replace(/\\\//g, '/');
   if (url.startsWith('//')) return 'https:' + url;
   if (url.startsWith('http://')) return url.replace(/^http:/, 'https:');
   return url;
@@ -158,8 +159,16 @@ function extractFromEmbedded(data, result) {
     result.avatar = normalizeUrl(photo.author.headerUrl);
   }
 
-  // 封面（标准化 URL）
-  result.cover = normalizeUrl(photo.coverUrl) || result.cover;
+  // 封面（标准化 URL，兼容对象和字符串两种格式）
+  if (photo.coverUrl) {
+    result.cover = normalizeUrl(typeof photo.coverUrl === 'string' ? photo.coverUrl : (photo.coverUrl.url || ''));
+  }
+  if (!result.cover && photo.cover) {
+    result.cover = normalizeUrl(typeof photo.cover === 'string' ? photo.cover : (photo.cover.url || ''));
+  }
+  if (!result.cover && photo.poster) {
+    result.cover = normalizeUrl(typeof photo.poster === 'string' ? photo.poster : (photo.poster.url || ''));
+  }
 
   // 视频
   if (photo.photoUrl && result.videos.length === 0) {
@@ -219,8 +228,25 @@ function extractFromRegex(html, result) {
   const headUrlM = html.match(/"headUrl"\s*:\s*"([^"]+)"/);
   if (headUrlM) { result.avatar = headUrlM[1].replace(/\\u002F/g, '/'); found = true; }
 
-  const coverM = html.match(/"coverUrl"\s*:\s*"([^"]+)"/);
-  if (coverM) { result.cover = coverM[1].replace(/\\u002F/g, '/'); found = true; }
+  const coverM = html.match(/"coverUrl"\s*:\s*"([^"]+?)"(?=[,\s\}])/);
+  if (coverM) {
+    result.cover = coverM[1].replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+    found = true;
+  }
+  if (!result.cover) {
+    const coverAlt = html.match(/"cover"\s*:\s*"([^"]+)"/);
+    if (coverAlt) {
+      const val = coverAlt[1].replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+      if (val.startsWith('http:') || val.startsWith('https:') || val.startsWith('//')) { result.cover = val; found = true; }
+    }
+  }
+  if (!result.cover) {
+    const posterM = html.match(/"poster"\s*:\s*"([^"]+)"/);
+    if (posterM) {
+      const val = posterM[1].replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+      if (val.startsWith('http:') || val.startsWith('https:') || val.startsWith('//')) { result.cover = val; found = true; }
+    }
+  }
 
   const photoUrlM = html.match(/"photoUrl"\s*:\s*"([^"]+)"/);
   if (photoUrlM && result.videos.length === 0) {

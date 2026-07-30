@@ -943,9 +943,9 @@ function renderResult(d) {
   // ---- 封面 ----
   html += '<div class="media-cover-wrap">';
   if (d.cover) {
-    html += '<img src="'+escapeHtml(d.cover)+'" alt="封面" loading="lazy">';
+    html += '<img src="/api/proxy/image?url='+encodeURIComponent(d.cover)+'" alt="封面" loading="lazy" referrerpolicy="no-referrer">';
   } else if (allImages.length > 0) {
-    html += '<img src="'+escapeHtml(allImages[0])+'" alt="封面" loading="lazy">';
+    html += '<img src="/api/proxy/image?url='+encodeURIComponent(allImages[0])+'" alt="封面" loading="lazy" referrerpolicy="no-referrer">';
   } else {
     html += '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:48px;">'+pIcon+'</div>';
   }
