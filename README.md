@@ -40,6 +40,8 @@
 | 全民K歌 | 🎤 | 音频 | HTML 正则提取 | 低 |
 | AcFun | 🔴 | 视频 | 官方 API | 低 |
 
+> 📌 **验证状态：** 目前作者仅对 **抖音** 和 **快手** 两个平台进行了实际验证，其余平台（小红书、微博、YouTube 等）的解析代码已编写但**尚未实际测试**。如果你使用了某个平台并发现可用或存在问题，欢迎提交 [Issue](https://github.com/jidanbings/cf-media-parser/issues) 或 [Pull Request](https://github.com/jidanbings/cf-media-parser/pulls) 帮助完善。
+
 ### 🔧 核心功能
 
 - **智能识别** — 自动检测链接所属平台，提取标题、作者、封面、内容
