@@ -2,7 +2,7 @@
 
 基于 Cloudflare Workers + Pages 构建的多平台媒体解析下载工具，支持 12 个主流平台的视频、图文、动图内容的智能识别与批量下载。
 
-**版本：** v3.2.1（B站永久放弃 + 快手封面修复）
+**版本：** v3.2.1
 **许可证：** MIT
 **源码：** [github.com/jidanbings/cf-media-parser](https://github.com/jidanbings/cf-media-parser)
 
@@ -13,13 +13,14 @@
 1. [功能特性](#功能特性)
 2. [系统架构](#系统架构)
 3. [项目结构](#项目结构)
-4. [构建与部署](#构建与部署)
-5. [解析引擎架构](#解析引擎架构)
-6. [各平台解析策略详解](#各平台解析策略详解)
-7. [安全体系](#安全体系)
-8. [API 接口](#api-接口)
-9. [反爬对抗设计](#反爬对抗设计)
-10. [更新日志](#更新日志)
+4. [构建命令详解](#构建命令详解)
+5. [部署说明](#部署说明)
+6. [解析引擎架构](#解析引擎架构)
+7. [各平台解析策略详解](#各平台解析策略详解)
+8. [安全体系](#安全体系)
+9. [API 接口](#api-接口)
+10. [反爬对抗设计](#反爬对抗设计)
+11. [更新日志](#更新日志)
 
 ---
 
@@ -191,129 +192,127 @@
 
 ```
 cf-media-parser/
+│
 ├── package.json                # 项目配置 + esbuild 构建脚本
-├── dist/                       # 构建产出目录（npm run build:dist）
-│   ├── _worker.js              #   打包后的 Worker 代码
+│
+├── src/                        # 【源代码目录】—— 23 个源文件
+│   ├── worker.js               #   入口文件（ES Module Worker）
+│   ├── config.js               #   常量配置（平台映射、UA池、安全参数）
+│   ├── router.js               #   路由分发 + 中间件编排
+│   │
+│   ├── parsers/                #   【解析引擎】ParserFactory 模式
+│   │   ├── factory.js          #     工厂：平台检测 → 分发 → 标准化
+│   │   ├── base.js             #     共享工具函数（extractJSON, buildResult）
+│   │   ├── douyin.js           #     抖音解析器 + a_bogus 签名
+│   │   ├── a_bogus.js          #     抖音签名算法（RC4 + SM3）
+│   │   ├── kuaishou.js         #     快手解析器
+│   │   ├── xiaohongshu.js      #     小红书解析器
+│   │   ├── weibo.js            #     微博解析器
+│   │   ├── tiktok.js           #     TikTok 解析器
+│   │   ├── youtube.js          #     YouTube 解析器
+│   │   ├── xigua.js            #     西瓜视频解析器
+│   │   ├── haokan.js           #     好看视频解析器
+│   │   ├── zhihu.js            #     知乎解析器
+│   │   ├── pipixia.js          #     皮皮虾解析器
+│   │   ├── quanminkge.js       #     全民K歌解析器
+│   │   ├── acfun.js            #     AcFun 解析器
+│   │   └── music.js            #     汽水音乐解析器
+│   │
+│   └── utils/                  #   【工具层】
+│       ├── fetcher.js          #     HTTP 工具（多 UA 轮换）
+│       ├── jwt.js              #     JWT 签发与验证（HS256）
+│       ├── zip.js              #     ZIP 打包（CRC32 实现）
+│       ├── security.js         #     速率限制 / SSRF / CSRF / 文件名验证
+│       └── response.js         #     JSON 响应 / 代理下载 / 流媒体
+│
+├── dist/                       # 【构建产出目录】npm run build:dist
+│   ├── _worker.js              #   打包后的 Worker 代码（单文件）
 │   ├── index.html              #   登录验证页
 │   ├── video.html              #   多平台解析下载页
 │   ├── music.html              #   汽水音乐解析页
 │   ├── option.html             #   功能选择页
 │   └── _routes.json            #   路由配置
 │
-├── src/
-│   ├── worker.js               # ES Module Worker 入口
-│   ├── config.js               # 全局常量配置
-│   ├── router.js               # 路由分发 + 中间件编排
-│   │
-│   ├── parsers/                # 【解析引擎】ParserFactory 模式
-│   │   ├── factory.js          # 平台检测 + 分发 + 标准化
-│   │   ├── base.js             # 共享工具（extractJSON, createEmptyResult, buildResult）
-│   │   ├── douyin.js           # 抖音解析器
-│   │   ├── a_bogus.js          # 抖音 a_bogus 签名算法（RC4 + SM3）
-│   │   ├── kuaishou.js         # 快手解析器
-│   │   ├── xiaohongshu.js      # 小红书解析器
-│   │   ├── weibo.js            # 微博解析器
-│   │   ├── tiktok.js           # TikTok 解析器
-│   │   ├── youtube.js          # YouTube 解析器
-│   │   ├── xigua.js            # 西瓜视频解析器
-│   │   ├── haokan.js           # 好看视频解析器
-│   │   ├── zhihu.js            # 知乎解析器
-│   │   ├── pipixia.js          # 皮皮虾解析器
-│   │   ├── quanminkge.js       # 全民K歌解析器
-│   │   ├── acfun.js            # AcFun 解析器
-│   │   └── music.js            # 汽水音乐解析器
-│   │
-│   └── utils/                  # 【工具层】
-│       ├── fetcher.js          # HTTP 工具（fetchPage / fetchJson / fetchHtml）
-│       ├── jwt.js              # JWT 签发与验证（HS256）
-│       ├── zip.js              # SimpleZip 类（CRC32 ZIP 打包）
-│       ├── security.js         # 速率限制 / SSRF / CSRF / 文件名验证
-│       └── response.js         # JSON 响应 / 安全头 / 代理下载 / 流媒体
-│
-├── index.html                  # 登录验证页
-├── video.html                  # 多平台解析下载页
-├── music.html                  # 汽水音乐解析页
-├── option.html                 # 功能选择页
-├── _routes.json                # 路由配置（确保所有请求经 Worker）
+├── index.html                  # 📄 登录验证页（源文件）
+├── video.html                  # 📄 多平台解析下载页（源文件）
+├── music.html                  # 📄 汽水音乐解析页（源文件）
+├── option.html                 # 📄 功能选择页（源文件）
 │
 └── docs/
-    └── architecture.md         # 本文档
+    └── architecture.md         # 📄 架构文档（本文档）
 ```
+
+> 架构设计借鉴自 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python）的 **ParserFactory 模式**。
+>
+> `src/` 目录下 **23 个源文件** 通过 esbuild 打包为 **1 个文件** `dist/_worker.js`，方便部署。
 
 ---
 
-## 构建与部署
+## 构建命令详解
 
-### 构建（在本地电脑上操作）
+### 命令一览
 
-#### 前置准备
+| 命令 | 说明 | 产物 |
+|------|------|------|
+| `npm run build` | **构建 Worker** — 将 `src/` 源码打包 | `dist/_worker.js`（~86KB 未压缩） |
+| `npm run build:minify` | **压缩构建** — 同上但压缩代码 | `dist/_worker.js`（~40KB） |
+| `npm run copy:dist` | **复制页面** — 将 HTML + `_routes.json` 复制到 `dist/` | `dist/` 内 6 个文件 |
+| `npm run build:dist` | **完整构建** — build + copy:dist 一步完成 | `dist/` 目录完整部署包 |
+| `npm run dev` | **监听模式** — 源码变化时自动重新构建 | `dist/_worker.js` |
+| `npm run deploy` | **构建 + 同步** — 构建后复制到 `dash/` 目录 | `dash/` 内 6 个文件 |
 
-确保已安装 [Node.js](https://nodejs.org/) >= 18：
-
-```bash
-node -v   # v18.0.0 或更高
-npm -v    # 9.x 或更高
-```
-
-#### 构建步骤
-
-```bash
-# 1. 进入项目目录
-cd cf-media-parser
-
-# 2. 安装依赖（仅首次需要）
-npm install
-
-# 3. 构建项目
-npm run build:dist      # 完整构建（Worker + 复制页面到 dist/）
-# 或分步执行：
-npm run build           # 仅构建 Worker（dist/_worker.js）
-npm run copy:dist       # 复制 HTML + _routes.json 到 dist/
-```
-
-#### 构建产物
-
-执行完成后 `dist/` 目录下会生成 6 个部署文件：
-
-| 构建方式 | 产物 | 说明 |
-|---------|------|------|
-| `npm run build` | `dist/_worker.js` ~86 KB | 仅构建 Worker（保留可读性） |
-| `npm run build:minify` | `dist/_worker.js` ~40 KB | 压缩构建，适合生产环境 |
-| `npm run build:dist` | `dist/` 内 6 个文件 | 完整构建（Worker + 页面文件） |
-| `npm run copy:dist` | `dist/` 内 HTML 文件 | 仅复制页面文件到 `dist/` |
-
-#### 构建原理
-
-`src/` 目录下的 23 个源文件通过 esbuild 打包，再复制页面文件：
+### 构建流程
 
 ```
-  src/worker.js  ───┐
-  src/config.js  ───┤
-  src/router.js  ───┤
-  src/parsers/   ───┤─── esbuild --bundle --format=esm ───→ dist/_worker.js
-  src/utils/     ───┤                                         （单文件）
-  （共23个源文件） ───┘
-                           │
-                           ▼  npm run copy:dist
-                           │
-                       dist/ 目录 —— ▶ 部署
-                         ├── _worker.js
-                         ├── index.html
-                         ├── video.html
-                         ├── music.html
-                         ├── option.html
-                         └── _routes.json
+源代码 (src/ 目录)             构建产物 (dist/ 目录)
+                          │
+  src/worker.js  ─────────┤
+  src/config.js  ─────────┤
+  src/router.js  ─────────┤
+  src/parsers/   ─────────┤─── esbuild --bundle --format=esm ───→ dist/_worker.js
+  │   ├── factory.js      │
+  │   ├── base.js         │        ───→ 共 23 个源文件打包为 1 个文件
+  │   ├── douyin.js       │
+  │   ├── a_bogus.js      │                +  npm run copy:dist
+  │   ├── kuaishou.js     │                       │
+  │   └── ... (14个解析器)  │                       ▼
+  └── src/utils/           │               ┌──────────────┐
+      ├── fetcher.js       │               │  dist/       │
+      ├── jwt.js           │               │  ├─ _worker.js  │
+      ├── zip.js           │               │  ├─ index.html  │
+      ├── security.js      │               │  ├─ video.html  │
+      └── response.js      │               │  ├─ music.html  │
+                          │               │  ├─ option.html │
+                          │               │  └─ _routes.json│
+                          │               └──────────────┘
+                          │                    │
+                          ▼                    ▼ 部署到 Cloudflare Pages
+              worker 单文件                    (只部署 dist/ 目录)
+              (~86KB / ~40KB 压缩)
 ```
 
-> Cloudflare Pages 只部署 `dist/` 目录，源码文件 (`src/`) 不会暴露到 CDN。
+> Cloudflare Pages 只部署 `dist/` 目录，`src/`、`docs/`、`package.json` 等源码文件**不会暴露**到 CDN 上，保证安全。
+
+### 构建产物说明
+
+| 文件 | 大小 | 说明 |
+|------|------|------|
+| `dist/_worker.js` | ~86 KB | ⭐ **核心 Worker** — 所有后端逻辑（路由、解析器、安全、工具） |
+| `dist/index.html` | ~7 KB | 登录验证页面 |
+| `dist/video.html` | ~50 KB | 多平台解析下载页面 |
+| `dist/music.html` | ~15 KB | 汽水音乐解析页面 |
+| `dist/option.html` | ~7 KB | 功能选择页面 |
+| `dist/_routes.json` | <1 KB | 路由配置，确保所有请求经过 Worker |
 
 ---
 
-### 部署到 Cloudflare Pages
+## 部署说明
+
+### 部署方式概述
 
 Cloudflare Pages 支持两种部署方式：**连接 Git 仓库（自动部署）** 或 **手动上传**。
 
-#### 方式一：连接 GitHub 自动部署（推荐）
+### 方式一：连接 GitHub 自动部署（推荐）
 
 **① Fork 本项目到你的 GitHub**
 - 打开 https://github.com/jidanbings/cf-media-parser
@@ -339,98 +338,41 @@ cd cf-media-parser
 | 构建命令 | `npm install && npm run build:dist` |
 | 构建输出目录 | `dist` |
 
-⚠️ **输出目录设为 `dist`**，这样 `src/`、`docs/`、`package.json` 等源码文件不会被部署到 CDN 上。
+> ⚠️ **输出目录设为 `dist`**，这样 `src/`、`docs/`、`package.json` 等源码文件不会被部署到 CDN 上。
 
 **⑤ 点击「保存并部署」**，Cloudflare 自动完成拉取 → 安装 → 构建 → 部署。
 
 > 以后每次 `git push`，Cloudflare Pages 会自动重新构建部署，无需手动操作。
 
----
+### 方式二：手动上传文件
 
-#### 方式二：手动上传文件
-
-**① 本地构建**
-
-**① 打开 Cloudflare Dashboard**
-- 访问 https://dash.cloudflare.com/
-- 左侧菜单选择 **Workers 和 Pages**
-- 点击 **Pages** 选项卡
-
-**② 创建项目**
-- 点击 **创建** → **Pages** → **直接上传**
-- 输入项目名称，例如 `media-parser`
-- 点击 **创建项目**
-
-**③ 准备部署文件**
-
-先执行完整构建：
-
+先本地构建：
 ```bash
 npm run build:dist
 ```
 
-构建完成后，`dist/` 目录下会包含 6 个文件：
+构建完成后 `dist/` 目录包含 6 个文件，进入 Cloudflare Pages 项目 → **部署** → **创建部署** → **直接上传**，将 6 个文件拖入上传区域即可。
 
-| 文件 | 大小 | 用途 |
-|------|------|------|
-| `_worker.js` | ~88 KB | ⭐ 核心 Worker 代码（必须） |
-| `index.html` | ~7 KB | 登录验证页 |
-| `video.html` | ~50 KB | 多平台解析下载页 |
-| `music.html` | ~15 KB | 汽水音乐页 |
-| `option.html` | ~7 KB | 功能选择页 |
-| `_routes.json` | &lt;1 KB | 路由配置，确保所有请求经过 Worker |
-
-**④ 上传文件到 Cloudflare**
-- 进入项目 → **部署** → **创建部署** → **直接上传**
-- 将 `dist/` 目录下的 6 个文件**拖拽**到上传区域
-- 点击 **部署**
-
-> 💡 也可以用 `npm run deploy` 将文件复制到 `dash/` 目录再上传。
-
-**⑤ 记录你的域名**
-部署完成后会分配一个 `.pages.dev` 域名，例如：
-```
-https://media-parser-xxx.pages.dev
-```
-
----
-
-#### 方式二：Wrangler CLI（适合开发者）
+### 方式三：Wrangler CLI
 
 ```bash
-# 安装 Wrangler
 npm install -g wrangler
-
-# 登录 Cloudflare 账号
 npx wrangler login
-
-# 部署
 npx wrangler pages deploy dist --project-name media-parser
 ```
 
----
-
-### 配置环境变量（必须）
+### 环境变量（必须）
 
 部署后，进入 Cloudflare Pages 项目 → **设置** → **环境变量** → **生产环境**，添加：
 
-| 变量名 | 说明 | 是否必填 | 示例值 |
-|--------|------|:--------:|--------|
-| `SECRET_KEY` | 访问密码，登录时用户输入的比对密钥 | **是** | `mP3xK9vR7sT2wY5n` |
-| `JWT_SECRET` | JWT 签名密钥，用于签发和验证登录令牌 | **是** | `aH8qL4zX1cV6bN3m` |
+| 变量名 | 说明 | 是否必填 |
+|--------|------|:--------:|
+| `SECRET_KEY` | 访问密码，登录时用户输入的比对密钥 | **是** |
+| `JWT_SECRET` | JWT 签名密钥，用于签发和验证登录令牌 | **是** |
 
-⚠️ **两个变量都必须设置**，缺少任一变量会返回 500 错误并提示缺失项。
+> ⚠️ **两个变量都必须设置**，缺少任一变量返回 500 错误。修改环境变量后需要**重新部署**才能生效。
 
-> 💡 生成随机密钥：`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-
-**设置环境变量后，需要重新部署才能生效：**
-1. 进入项目 → **部署**
-2. 找到最新部署记录
-3. 点击右侧 **...** → **重试部署**
-
----
-
-### 完整部署流程图
+### 完整部署流程
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -464,14 +406,6 @@ npx wrangler pages deploy dist --project-name media-parser
 │  → 选择「视频解析」→ 粘贴链接 → 解析成功                        │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-### 部署
-
-将项目根目录部署为 Cloudflare Pages 项目：
-
-- **构建命令**：`npm install && npm run build:dist`
-- **构建输出目录**：`dist`（只部署 dist/ 目录内的文件，源码不会暴露）
-- **生产分支**：`main`
 
 ---
 
@@ -556,6 +490,25 @@ function buildResult(data)
 ---
 
 ## 各平台解析策略详解
+
+### 解析方式总览
+
+| 平台 | 解析方式 | 核心逻辑 | 需要 Cookie |
+|------|---------|---------|:----------:|
+| **抖音** | a_bogus 签名 + 官方 API | 滑动窗口签名 + RC4 加密 + SM3 哈希 | 否 |
+| **快手** | 移动端 INIT_STATE 提取 | 多 URL × 多 UA 轮换，花括号平衡解析 JSON | 是 |
+| **小红书** | HTML `__INITIAL_STATE__` | 从页面嵌入数据提取笔记信息 | 是 |
+| **微博** | Mobile API + PC API | 多 API 端点和 HTML 降级解析 | 否 |
+| **TikTok** | tikwm.com API + 页面 HTML | 第三方 API + 页面嵌入数据双通道 | 否 |
+| **YouTube** | oEmbed + Invidious | oEmbed 快速获取元数据，Invidious 回退 | 否 |
+| **西瓜视频** | `_ROUTER_DATA` + SSR | Vue 路由数据 + 服务端渲染降级 | 否 |
+| **好看视频** | `__PRELOADED_STATE__` | 百度预加载数据提取 | 否 |
+| **知乎** | 官方 API v4 | 知乎标准 JSON API | 否 |
+| **皮皮虾** | h5 API | 移动端 h5 接口 | 否 |
+| **全民K歌** | HTML 正则提取 | 正则匹配嵌入的音频数据 | 否 |
+| **AcFun** | 官方 API video info | AcFun 标准 API | 否 |
+
+---
 
 ### 抖音（`douyin.js` + `a_bogus.js`）
 
@@ -745,6 +698,7 @@ Cookie 设置 `Secure; HttpOnly; SameSite=Lax`，仅通过 HTTPS 传输，JavaSc
 | `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self'; media-src 'self'; font-src 'self' data:; frame-src 'none'` |
 
 CSP 策略说明：
+
 | 指令 | 效果 |
 |------|------|
 | `default-src 'self'` | 所有资源默认只允许同源加载 |
@@ -784,7 +738,7 @@ const RATE_MAP_MAX_ENTRIES = 500;
 ### `GET|POST /api/parse` — 多平台统一解析（需授权）
 
 | 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+|------|------|:----:|------|
 | `url` | string | 是 | 任意平台分享链接（GET 参数或 POST JSON body） |
 
 **支持平台：** 抖音、快手、小红书、微博、TikTok、YouTube、西瓜视频、好看视频、知乎、皮皮虾、全民K歌、AcFun（共 12 个）
@@ -794,7 +748,7 @@ const RATE_MAP_MAX_ENTRIES = 500;
 ### `GET /api/download` — 代理下载（需授权）
 
 | 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+|------|------|:----:|------|
 | `url` | string | 是 | 原始文件 URL |
 | `filename` | string | 否 | 下载文件名 |
 

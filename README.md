@@ -1,6 +1,8 @@
 # cf-media-parser
 
-🌐 **多平台媒体解析下载工具** — 基于 Cloudflare Workers + Pages 构建，支持 12 个主流平台的视频、图文、动图、音频内容解析与代理下载。
+🌐 **多平台媒体解析下载工具** — 基于 Cloudflare Workers + Pages 的零成本部署方案，支持 12 个主流平台的**视频、图文、动图、音频**内容解析与代理下载。JWT 令牌认证（密码 + UA 绑定），切换网络不受影响。
+
+> ⛔ **B站（哔哩哔哩）永久放弃支持** — 由于 B站的反爬机制过于激进（Cloudflare Workers 的 TLS 指纹检测返回 412），本项目永久放弃对 B站 的支持。如果你需要解析 B站视频，请使用 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python VPS 部署版）。
 
 > ⛔ **B站（哔哩哔哩）永久放弃支持** — 由于 B站的反爬机制过于激进（Cloudflare Workers 的 TLS 指纹检测返回 412），本项目永久放弃对 B站 的支持。如果你需要解析 B站视频，请使用 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python VPS 部署版）。
 
@@ -14,9 +16,7 @@
 - [功能特点](#-功能特点)
 - [快速开始](#-快速开始)
 - [API 接口](#-api-接口)
-- [项目结构](#-项目结构)
-- [解析策略](#-解析策略)
-- [构建命令](#-构建命令)
+- [项目结构 / 解析策略 / 构建命令](#-项目结构--解析策略--构建命令)
 - [更新日志](#-更新日志)
 - [法律声明](#-法律声明)
 
@@ -57,6 +57,7 @@
 | 机制 | 说明 |
 |------|------|
 | **密码保护** | JWT 令牌验证，12 小时有效，仅服务端处理密码 |
+| **UA 绑定** | 令牌绑定登录时的浏览器 User-Agent，换浏览器需重新登录，切换网络不影响 |
 | **速率限制** | 3 次错误锁定 1 小时，不透露剩余尝试次数 |
 | **后端登录** | 密码通过表单 POST 提交，前端无验证逻辑 |
 | **CORS 防护** | 禁止跨域盗用 |
@@ -71,51 +72,298 @@
 
 ### 方法一：连接 GitHub 自动部署（推荐）
 
-将本项目 **fork 到你的 GitHub 账号下**，然后关联 Cloudflare Pages，每次推送自动部署。
+将本项目 **fork 到你的 GitHub 账号下**，然后关联 Cloudflare Pages，每次推送自动构建部署，一劳永逸。
 
-**操作步骤：**
+---
 
-① **Fork 本项目到你的 GitHub**
+#### ① Fork 项目到你的 GitHub 账号
 
-- 打开 https://github.com/jidanbings/cf-media-parser
-- 点击右上角 **Fork** → **Create fork**
-- 这样你就有了自己的仓库：`https://github.com/你的用户名/cf-media-parser`
+这一步是把原项目复制一份到你自己名下，之后你所有修改都推送到自己的仓库。
 
-② **把代码克隆到本地并推送到你的仓库**
+1. **打开原项目地址**（在浏览器中打开）：
+   ```
+   https://github.com/jidanbings/cf-media-parser
+   ```
+
+2. **点击 Fork 按钮**：
+   - 页面右上角有一个 **Fork** 按钮（就在头像旁边），点击它
+   - 下拉菜单中选择 **Create fork**
+
+3. **配置 Fork 参数**：
+   - **Owner**：选择你的个人 GitHub 账号（默认就是你自己，不用改）
+   - **Repository name**：保持 `cf-media-parser` 不变即可
+   - **Description**：可选，可以写一句说明
+   - **☑️ Copy the `main` branch only**：保持勾选（只复制主分支，够了）
+
+4. **点击「Create fork」**：
+   - 等待几秒钟，GitHub 会完成复制
+   - 完成后浏览器会自动跳转到你自己的仓库页面
+   - 地址栏显示：`https://github.com/你的用户名/cf-media-parser`
+
+✅ Fork 完成。现在你名下有了一个完全独立的仓库，你可以随意修改它。
+
+---
+
+#### ② 将你的仓库代码克隆到本地（可选）
+
+这一步**不是必须的**——如果你想修改代码、更新功能或者自定义配置，才需要拉到本地；如果只想直接用原版，可以直接跳到第③步。
+
+> 💡 **什么时候需要拉到本地？**
+> - 你想修改代码或自定义功能 → 需要
+> - 你用原版不动，直接部署 → 不需要，跳到第③步
+> - 你以后想更新代码 → 需要，先拉到本地再改
 
 ```bash
-# 克隆你自己的仓库（替换为你的用户名）
+# ① 克隆你自己的仓库（替换为你的 GitHub 用户名）
 git clone https://github.com/你的用户名/cf-media-parser.git
+
+# ② 进入项目目录
 cd cf-media-parser
 
-# 如果你已经克隆了原仓库，改一下 remote 地址
-git remote set-url origin https://github.com/你的用户名/cf-media-parser.git
-git push -u origin main
+# ③ 查看 remote 地址，确认是连接到你的仓库
+git remote -v
+# 应该显示：
+#   origin  https://github.com/你的用户名/cf-media-parser.git (fetch)
+#   origin  https://github.com/你的用户名/cf-media-parser.git (push)
 ```
 
-③ **在 Cloudflare Pages 控制台创建项目**
-- 访问 https://dash.cloudflare.com/ → **Workers 和 Pages** → **Pages**
-- 点击 **创建** → **Pages** → **连接到 Git**
-- 授权 Cloudflare 访问你的 GitHub 账号
-- 选择你 fork 的 `cf-media-parser` 仓库
+> ⚠️ **如果你之前已经克隆了原仓库**，只需改一下 remote 地址即可：
+> ```bash
+> git remote set-url origin https://github.com/你的用户名/cf-media-parser.git
+> git push -u origin main
+> ```
 
-④ **配置构建设置（关键！）**
+**以后想更新代码时：**
 
-| 设置项 | 值 |
-|--------|-----|
-| **项目名称** | `media-parser`（自定义） |
-| **生产分支** | `main` |
-| **构建命令** | `npm install && npm run build:dist` |
-| **构建输出目录** | `dist`（只部署 `dist/` 目录内的文件） |
+```bash
+# 修改代码后，提交并推送到你的 GitHub 仓库
+git add .
+git commit -m "你的修改说明"
+git push origin main
+```
 
-> 📦 构建命令做了两件事：① 用 esbuild 打包 `src/` → `dist/_worker.js`；② 复制 HTML 文件到 `dist/`。
-> 输出目录设为 `dist` 后，`src/`、`docs/`、`package.json` 等源码文件**不会被部署**到 CDN 上，保证安全。
+推送完成后，Cloudflare Pages 会自动检测到仓库变化，自动重新构建并部署。不需要手动操作。
 
-⑤ **点击「保存并部署」**
+---
 
-Cloudflare 会自动拉取代码 → 安装依赖 → 构建 → 部署，分配一个 `https://media-parser-xxx.pages.dev` 域名。
+#### ③ 在 Cloudflare Pages 控制台创建项目
 
-⑥ **以后每次 `git push` 都会自动重新构建部署**，无需手动操作。
+1. **登录 Cloudflare 控制台**：
+   - 打开 https://dash.cloudflare.com/
+   - 输入你的邮箱和密码登录
+   - 如果没有账号，先注册一个（支持 Google/GitHub 登录）
+
+2. **进入 Pages 页面**：
+   - 登录后，左侧侧边栏找到 **Workers 和 Pages**
+   - 点击展开后，选择上面的 **Pages** 选项卡
+   - 页面中间点击 **创建** 按钮
+   - 在弹出的选项中，选择 **Pages**
+
+3. **选择连接到 Git**：
+   - 你会看到两个选项：
+     - **连接到 Git** ← 选这个
+     - **直接上传**
+   - 点击 **连接到 Git**
+
+4. **授权 Cloudflare 访问 GitHub**（第一次使用时需要）：
+   - 如果是第一次在 Cloudflare 连接 GitHub，会跳转到 GitHub 授权页面
+   - 点击 **Authorize Cloudflare Pages**（授权）
+   - 输入 GitHub 密码确认（如果需要）
+   - 授权完成后，自动跳转回 Cloudflare 页面
+
+5. **选择你的仓库**：
+   - Cloudflare 会列出你 GitHub 账号下的所有仓库
+   - 在列表中找到你 fork 的 `cf-media-parser`
+   - 点击对应行的 **设置** 或 **导入** 按钮
+
+---
+
+#### ④ 配置构建设置（最关键的一步！）
+
+选择仓库后，进入构建设置页面。这里需要**严格按照下表填写**：
+
+| 设置项 | 填写值 | 说明 |
+|--------|--------|------|
+| **项目名称** | `media-parser` | 可以自定义，比如 `my-parser` 或 `cf-video-downloader`，这个名称会出现在 Pages 域名中 |
+| **生产分支** | `main` | 使用默认的 main 分支即可，不改 |
+| **构建命令** | `npm install && npm run build:dist` | 这是构建命令，**必须填写** |
+| **构建输出目录** | `dist` | 告诉 Cloudflare 部署 `dist/` 文件夹里的内容 |
+| **根目录** | （留空） | 不用填，默认就是项目根目录 |
+
+> 📦 **构建命令 `npm install && npm run build:dist` 做了两件事：**
+> 1. `npm install` — 安装项目依赖（从 `package.json` 读取）
+> 2. `npm run build:dist` — 运行构建脚本：
+>    - 用 esbuild 把 `src/` 目录下的 23 个源文件打包成 `dist/_worker.js`（单文件 Worker）
+>    - 把 `index.html`、`video.html`、`music.html`、`option.html`、`_routes.json` 复制到 `dist/` 目录
+
+> 🔒 **输出目录设为 `dist` 的安全性：**
+> 设置输出目录为 `dist` 后，Cloudflare 只把 `dist/` 里面的内容部署到 CDN 上。`src/`（源代码）、`docs/`（文档）、`package.json`、`node_modules/` 等目录**都不会暴露到公网**，保证了源码安全。
+
+---
+
+#### ⑤ 点击「保存并部署」
+
+1. 确认所有设置都正确后，点击页面底部的 **保存并部署** 按钮
+
+2. Cloudflare 会自动开始构建流程，你会看到一个实时的构建日志界面：
+   ```
+   🔄 Cloning repository...        ← 拉取你的 GitHub 仓库代码
+   📦 Installing dependencies...   ← 执行 npm install 安装依赖
+   🔨 Building...                  ← 执行 npm run build:dist 构建
+   ✅ Build complete!              ← 构建完成
+   🚀 Deploying...                 ← 正在部署到 Cloudflare 全球网络
+   ✅ Deployment complete!         ← 部署完成
+   ```
+
+3. 整个过程大约需要 **1-3 分钟**，取决于网络状况
+
+4. 部署成功后，Cloudflare 会自动分配一个域名，格式如下：
+   ```
+   https://media-parser-xxx.pages.dev
+   ```
+   - 其中 `xxx` 是一个随机字符串
+   - 例如：`https://media-parser-3a1b2c3d.pages.dev`
+   - 点击这个域名，就可以访问你的工具了
+
+5. **你可以自定义域名**（可选）：
+   - 在项目 → **自定义域** → **设置自定义域**
+   - 输入你自己的域名（需要有 DNS 管理权限）
+   - Cloudflare 会自动添加 DNS 记录
+
+---
+
+#### ⑥ 配置环境变量（必须操作，否则工具无法运行）
+
+部署完成后，还需要配置两个环境变量，否则工具会返回 500 错误。
+
+1. **进入环境变量设置页面**：
+   - 在你刚刚创建的 Pages 项目中
+   - 点击顶部导航栏的 **设置** 选项卡
+   - 在左侧找到 **环境变量**
+   - 在 **生产环境变量**（Production）一栏，点击 **添加变量**
+
+2. **添加第一个变量：`SECRET_KEY`**
+
+   | 字段 | 值 |
+   |------|-----|
+   | **变量名** | `SECRET_KEY` |
+   | **值** | 任意字符串，建议 16 位以上 |
+   | **加密** | ☑️ 勾选（对变量值加密） |
+
+3. **添加第二个变量：`JWT_SECRET`**
+
+   | 字段 | 值 |
+   |------|-----|
+   | **变量名** | `JWT_SECRET` |
+   | **值** | 另一个不同的随机字符串 |
+   | **加密** | ☑️ 勾选 |
+
+4. **点击「保存」**
+
+> ⚠️ **两条铁律：**
+> 1. **两个变量都必须配置**，少一个工具无法运行
+> 2. 两个变量的值**不要相同**，建议用不同的随机字符串
+> 3. `SECRET_KEY` 是登录密码，你会用它登录工具；`JWT_SECRET` 是 JWT 签名密钥，内部使用
+
+> 💡 **生成随机密钥的几种方法：**
+> - **方法一（推荐）**：在你的电脑命令行执行：
+>   ```bash
+>   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+>   # 输出示例: 7a3f9c1e5b8d2f6a0c4e7b9d1f3a5c7e
+>   ```
+> - **方法二**：用在线密码生成器生成两个不同字符串
+> - **方法三**：自己随便输入两串不同的乱码，比如 `MySecretKey2024!` 和 `AnotherRandomKey2024!`
+
+---
+
+#### ⑦ 重新部署使环境变量生效
+
+环境变量修改后，需要重新部署才能生效。
+
+1. 进入项目页面，点击顶部的 **部署** 选项卡
+2. 在部署列表中，找到最新的一条部署记录
+3. 点击该记录右侧的 **...**（更多操作）
+4. 在下拉菜单中选择 **重试部署**
+5. Cloudflare 会重新拉取代码并部署（这次环境变量带上了）
+
+> 💡 **每次修改环境变量后，都要重试部署一次**，否则修改不会生效。
+
+---
+
+#### ⑧ 验证部署是否成功
+
+1. 打开你的 Pages 域名，例如：
+   ```
+   https://media-parser-xxx.pages.dev
+   ```
+
+2. 应该能看到登录页面，一个输入密码的界面
+
+3. **测试登录**：
+   ```
+   步骤一：在输入框中输入你设置的 SECRET_KEY（密码）
+   步骤二：点击「登录」或「提交」按钮
+   步骤三：登录成功 → 自动跳转到功能选择页面
+   步骤四：点击「视频解析」进入解析页面
+   步骤五：粘贴一个抖音/快手等平台的分享链接
+   步骤六：点击「解析」按钮
+   步骤七：✅ 成功显示视频标题、封面、作者、下载按钮
+   ```
+
+4. **常见验证问题排查**：
+
+   | 现象 | 原因 | 解决办法 |
+   |------|------|----------|
+   | 打开页面显示 **500 错误** | `SECRET_KEY` 或 `JWT_SECRET` 未配置 | 去环境变量页面添加，然后重新部署 |
+   | 输入密码后提示 **密钥错误** | 输入的密码与 `SECRET_KEY` 不一致 | 检查环境变量中的 `SECRET_KEY` 值 |
+   | **页面白屏/空白** | 构建输出目录配置错误 | 确保输出目录设为 `dist` |
+   | **404 页面** | 路由问题 | 检查 `_routes.json` 是否在 `dist/` 目录中 |
+   | 解析结果 **一直加载中** | 平台反爬升级 | 更新代码或提 Issue |
+
+---
+
+#### ⑨ 日常使用：自动部署流程
+
+以后的使用流程非常简单：
+
+```bash
+# ① 在本地修改代码（如果需要）
+git add .
+git commit -m "更新了 XXX 功能"
+git push origin main
+```
+
+每次 `git push` 到 GitHub 后，Cloudflare Pages 会自动检测到仓库代码变化，然后自动执行：
+```
+代码推送 → GitHub 触发 Webhook → Cloudflare 拉取新代码
+    → 安装依赖 → 构建 → 部署到全球 CDN（约 1-2 分钟）
+```
+
+**全程不需要你再登录 Cloudflare 控制台。** 这是推荐这种部署方式的最大原因。
+
+---
+
+#### ⑩ 如何更新到原项目的最新版本
+
+如果你想同步原项目的最新更新：
+
+```bash
+# ① 添加原项目为 upstream 远程仓库（只需要做一次）
+git remote add upstream https://github.com/jidanbings/cf-media-parser.git
+
+# ② 拉取原项目的最新代码
+git fetch upstream
+
+# ③ 合并到你的本地 main 分支
+git checkout main
+git merge upstream/main
+
+# ④ 如果有冲突，解决冲突后提交
+# ⑤ 推送到你的 GitHub 仓库，自动部署
+git push origin main
+```
+
+> 💡 建议定期同步原项目的更新，以获得最新的功能、优化和安全修复。
 
 ---
 
@@ -384,115 +632,14 @@ POST /api/logout
 
 ---
 
-## 🏗️ 项目结构
+## 🏗️ 项目结构 / 🧠 解析策略 / ⚙️ 构建命令
 
-```
-cf-media-parser/
-├── package.json              # 项目配置 + esbuild 构建脚本
-├── src/                      # 源代码目录
-│   ├── worker.js             # 入口文件（ES Module Worker）
-│   ├── config.js             # 常量配置（平台映射、UA池、安全参数）
-│   ├── router.js             # 路由分发 + 中间件编排
-│   ├── parsers/              # 解析引擎（ParserFactory 模式）
-│   │   ├── factory.js        # 工厂：平台检测 → 分发 → 标准化
-│   │   ├── base.js           # 共享工具函数
-│   │   ├── douyin.js         # 抖音解析器 + a_bogus 签名
-│   │   ├── a_bogus.js        # 抖音签名算法（RC4 + SM3）
-│   │   ├── kuaishou.js       # 快手解析器
-│   │   ├── xiaohongshu.js    # 小红书解析器
-│   │   ├── weibo.js          # 微博解析器
-│   │   ├── tiktok.js         # TikTok解析器
-│   │   ├── youtube.js        # YouTube解析器
-│   │   ├── xigua.js          # 西瓜视频解析器
-│   │   ├── haokan.js         # 好看视频解析器
-│   │   ├── zhihu.js          # 知乎解析器
-│   │   ├── pipixia.js        # 皮皮虾解析器
-│   │   ├── quanminkge.js     # 全民K歌解析器
-│   │   ├── acfun.js          # AcFun解析器
-│   │   └── music.js          # 汽水音乐解析器
-│   └── utils/                # 工具模块
-│       ├── fetcher.js        # HTTP 工具（多 UA 轮换）
-│       ├── jwt.js            # JWT 签发与验证（HS256）
-│       ├── zip.js            # ZIP 打包（CRC32 实现）
-│       ├── security.js       # 速率限制 / SSRF / CSRF / 文件名验证
-│       └── response.js       # JSON 响应 / 代理下载 / 流媒体
-├── dist/                     # 构建产出目录（npm run build:dist）
-│   ├── _worker.js            #   打包后的 Worker 代码
-│   ├── index.html            #   登录验证页
-│   ├── video.html            #   多平台解析下载页
-│   ├── music.html            #   汽水音乐解析页
-│   ├── option.html           #   功能选择页
-│   └── _routes.json          #   路由配置
-├── index.html                # 📄 登录验证页（源文件）
-├── video.html                # 📄 多平台解析下载页（源文件）
-├── music.html                # 📄 汽水音乐解析页（源文件）
-├── option.html               # 📄 功能选择页（源文件）
-└── docs/
-    └── architecture.md       # 📄 架构文档
-```
-
-> 架构设计借鉴自 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python）的 **ParserFactory 模式**。
-
----
-
-## 🧠 解析策略
-
-| 平台 | 解析方式 | 核心逻辑 | 需要 Cookie |
-|------|---------|---------|:----------:|
-| **抖音** | a_bogus 签名 + 官方 API | 滑动窗口签名 + RC4 加密 + SM3 哈希 | 否 |
-| **快手** | 移动端 INIT_STATE 提取 | 多 URL × 多 UA 轮换，花括号平衡解析 JSON | 是 |
-| **小红书** | HTML `__INITIAL_STATE__` | 从页面嵌入数据提取笔记信息 | 是 |
-| **微博** | Mobile API + PC API | 多 API 端点和 HTML 降级解析 | 否 |
-| **TikTok** | tikwm.com API + 页面 HTML | 第三方 API + 页面嵌入数据双通道 | 否 |
-| **YouTube** | oEmbed + Invidious | oEmbed 快速获取元数据，Invidious 回退 | 否 |
-| **西瓜视频** | `_ROUTER_DATA` + SSR | Vue 路由数据 + 服务端渲染降级 | 否 |
-| **好看视频** | `__PRELOADED_STATE__` | 百度预加载数据提取 | 否 |
-| **知乎** | 官方 API v4 | 知乎标准 JSON API | 否 |
-| **皮皮虾** | h5 API | 移动端 h5 接口 | 否 |
-| **全民K歌** | HTML 正则提取 | 正则匹配嵌入的音频数据 | 否 |
-| **AcFun** | 官方 API video info | AcFun 标准 API | 否 |
-
----
-
-## ⚙️ 构建命令详解
-
-| 命令 | 说明 | 产物 |
-|------|------|------|
-| `npm run build` | **构建 Worker** — 将 `src/` 源码打包 | `dist/_worker.js`（~86KB 未压缩） |
-| `npm run build:minify` | **压缩构建** — 同上但压缩代码 | `dist/_worker.js`（~40KB） |
-| `npm run copy:dist` | **复制页面** — 将 HTML + `_routes.json` 复制到 `dist/` | `dist/` 内 6 个文件 |
-| `npm run build:dist` | **完整构建** — build + copy:dist 一步完成 | `dist/` 目录完整部署包 |
-| `npm run dev` | **监听模式** — 源码变化时自动重新构建 | `dist/_worker.js` |
-| `npm run deploy` | **构建 + 同步** — 构建后复制到 `dash/` 目录 | `dash/` 内 6 个文件 |
-
-### 构建流程
-
-```
-源代码 (src/ 目录)
-    │
-    ├── src/worker.js         ← 入口文件
-    ├── src/config.js         ← 平台域名、UA池、安全配置
-    ├── src/router.js         ← 路由分发 + 中间件
-    ├── src/parsers/          ← 解析引擎
-    │   ├── factory.js        ← ParserFactory 调度中心
-    │   ├── base.js           ← 共享工具函数
-    │   ├── douyin.js         ← 抖音解析器
-    │   ├── a_bogus.js        ← 抖音签名算法
-    │   ├── kuaishou.js       ← 快手解析器
-    │   └── ...               ← 共 14 个解析器文件
-    └── src/utils/            ← 工具模块
-        ├── fetcher.js        ← HTTP 工具
-        ├── jwt.js            ← JWT 签发验证
-        ├── zip.js            ← ZIP 打包
-        ├── security.js       ← 安全防护
-        └── response.js       ← 响应处理
-            │
-            ▼  esbuild --bundle --format=esm
-            │
-        _worker.js（单文件，可直接上传到 Cloudflare Pages）
-```
-
-> `src/` 目录下共有 **23 个源文件**，通过 esbuild 打包为**一个文件** `_worker.js`，方便部署。
+> 📖 **这三个部分的详细内容已整合到架构文档中，请参阅：**
+> - [项目结构](docs/architecture.md#项目结构)
+> - [解析策略](docs/architecture.md#各平台解析策略详解)
+> - [构建命令详解](docs/architecture.md#构建命令详解)
+>
+> `docs/architecture.md` 包含了项目的完整架构说明、目录结构、各平台解析方式、构建命令表、构建流程图等详细信息。
 
 ---
 

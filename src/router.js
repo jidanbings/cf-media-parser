@@ -34,7 +34,7 @@ function makeCookie(token) {
 // ========================================
 // 授权检查
 // ========================================
-async function isAuth(request) {
+async function isAuth(request, ip) {
   const cookieHeader = request.headers.get('Cookie') || '';
   const match = cookieHeader.match(COOKIE_REGEX);
   if (!match) return false;
@@ -42,6 +42,11 @@ async function isAuth(request) {
   const payload = await verifyJWT(token, JWT_SECRET);
   if (!payload) return false;
   if (Date.now() / 1000 > payload.exp) return false;
+  // UA 绑定校验（仅检查浏览器，不绑 IP，避免 WiFi/数据切换影响体验）
+  if (payload.ua) {
+    const currentUaHash = simpleHash(request.headers.get('User-Agent') || '');
+    if (payload.ua !== currentUaHash) return false;
+  }
   return true;
 }
 
@@ -70,7 +75,7 @@ async function handleVerify(request, env, ip) {
   }
 
   if (!inputKey) {
-    if (isForm) return Response.redirect('/?error=' + encodeURIComponent('请输入密钥'), 302);
+    if (isForm) return new Response(null, { status: 302, headers: { 'Location': '/?error=' + encodeURIComponent('请输入密钥') } });
     return json({ error: '请输入密钥' }, 400);
   }
 
@@ -78,11 +83,17 @@ async function handleVerify(request, env, ip) {
     clearRateLimit(ip);
     const now = Math.floor(Date.now() / 1000);
     const uaHash = simpleHash(request.headers.get('User-Agent') || '');
-    const payload = { exp: now + COOKIE_MAX_AGE, iat: now, ip, ua: uaHash };
-    const token = await createJWT(payload, JWT_SECRET);
+    const payload = { exp: now + COOKIE_MAX_AGE, iat: now, ua: uaHash };
+    let token;
+    try {
+      token = await createJWT(payload, JWT_SECRET);
+    } catch (e) {
+      if (isForm) return new Response(null, { status: 302, headers: { 'Location': '/?error=' + encodeURIComponent('令牌生成失败: ' + e.message) } });
+      return json({ error: '令牌生成失败', detail: e.message }, 500);
+    }
     const cookie = makeCookie(token);
     if (isForm) {
-      return new Response('', { status: 302, headers: { 'Location': '/option', 'Set-Cookie': cookie } });
+      return new Response(null, { status: 302, headers: { 'Location': '/option', 'Set-Cookie': cookie } });
     }
     return json({ success: true }, 200, { 'Set-Cookie': cookie });
   }
@@ -95,7 +106,7 @@ async function handleVerify(request, env, ip) {
     ? `尝试次数过多，请等待 ${result.waitSeconds} 秒`
     : '密钥错误';
 
-  if (isForm) return Response.redirect('/?error=' + encodeURIComponent(errMsg), 302);
+  if (isForm) return new Response(null, { status: 302, headers: { 'Location': '/?error=' + encodeURIComponent(errMsg) } });
   if (result.waitSeconds > 0) {
     return json({ error: errMsg, waitSeconds: result.waitSeconds, remaining: 0 }, 429);
   }
@@ -333,10 +344,10 @@ async function handleAdmin(request, path, url) {
 // 页面路由
 // ========================================
 
-async function servePage(path, request, env, url) {
+async function servePage(path, request, env, url, ip, authed) {
   // 登录页
   if (path === '/' || path === '/index.html') {
-    if (await isAuth(request)) {
+    if (authed) {
       return new Response('', { status: 302, headers: { 'Location': '/option', 'Cache-Control': 'no-store' } });
     }
     return env.ASSETS.fetch(new Request(url.origin + '/index.html', {
@@ -345,7 +356,7 @@ async function servePage(path, request, env, url) {
   }
 
   // 受保护页面：需要登录
-  if (!(await isAuth(request))) {
+  if (!authed) {
     if (path === '/video' || path === '/video.html' || path === '/music' || path === '/option') {
       return new Response('', { status: 302, headers: { 'Location': '/' } });
     }
@@ -510,7 +521,7 @@ h1{font-size:22px;color:#1a1a1a;margin-bottom:8px}
   }
 
   // ---- API 路由（需要授权）----
-  const authed = await isAuth(request);
+  const authed = await isAuth(request, ip);
 
   if (path === '/api/parse') {
     if (!authed) return addSecurityHeaders(json({ error: '未授权' }, 403));
@@ -557,7 +568,7 @@ h1{font-size:22px;color:#1a1a1a;margin-bottom:8px}
   }
 
   // ---- 页面路由 ----
-  const pageResp = await servePage(path, request, env, url);
+  const pageResp = await servePage(path, request, env, url, ip, authed);
   if (pageResp) return addSecurityHeaders(pageResp);
 
   // 404

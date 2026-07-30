@@ -2,297 +2,447 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>多平台媒体解析</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>CF Media Parser · 多平台媒体解析</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-/* ========================================
-   CSS 变量
-   ======================================== */
+/* ============================================
+   ✦ 设计系统
+   ============================================ */
 :root {
-  --primary: #667eea;
-  --primary-dark: #5a6fd6;
-  --success: #28a745;
-  --warning: #d4a000;
-  --danger: #dc3545;
-  --border: #e8e8ed;
-  --text: #1d1d1f;
-  --text2: #6e6e73;
-  --text3: #aeaeb2;
-  --bg: #f5f5f7;
-  --bg2: #ffffff;
-  --bg3: #fafafa;
-  --card: #ffffff;
-  --radius: 16px;
-  --radius2: 12px;
-  --radius3: 8px;
-  --shadow: 0 2px 20px rgba(0,0,0,0.06);
-  --shadow2: 0 4px 24px rgba(0,0,0,0.1);
-  --transition: .2s ease;
+  --primary: #7c5cfc;
+  --primary-light: #a78bfa;
+  --primary-lighter: #c4b5fd;
+  --secondary: #f472b6;
+  --surface: #ffffff;
+  --surface2: #f8f7fc;
+  --surface3: #f1eefe;
+  --border: #e8e5f0;
+  --border-light: #f0edf6;
+  --text: #1a1528;
+  --text2: #6b6580;
+  --text3: #9c96b0;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #6366f1;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(26,21,40,0.06);
+  --shadow-md: 0 4px 16px rgba(124,92,252,0.08);
+  --shadow-lg: 0 8px 32px rgba(124,92,252,0.12);
+  --transition: .25s ease;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 body.dark {
-  --bg: #111113;
-  --bg2: #1c1c1e;
-  --bg3: #2c2c2e;
-  --card: #1c1c1e;
-  --border: #38383a;
-  --text: #f5f5f7;
-  --text2: #a1a1a6;
-  --text3: #636366;
-  --shadow: 0 2px 20px rgba(0,0,0,0.3);
-  --shadow2: 0 4px 24px rgba(0,0,0,0.4);
+  --surface: #0f0d1a;
+  --surface2: #1a1730;
+  --surface3: #221f3a;
+  --border: #2d2944;
+  --border-light: #252240;
+  --text: #eeecf6;
+  --text2: #9892b0;
+  --text3: #6a6480;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
-  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background: var(--bg);
+  font-family: var(--font);
+  background: var(--surface);
   color: var(--text);
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ========================================
+/* ============================================
    容器
-   ======================================== */
-.container {
-  background: var(--bg2);
-  border-radius: 24px;
-  padding: 32px;
-  max-width: 900px;
-  width: 100%;
-  box-shadow: var(--shadow);
+   ============================================ */
+.wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
 }
 
-@media (max-width: 768px) {
-  body { padding: 12px; }
-  .container { padding: 20px; border-radius: 20px; }
-}
-@media (max-width: 480px) {
-  body { padding: 8px; }
-  .container { padding: 16px; border-radius: 16px; }
+@media (max-width: 640px) {
+  .wrap { padding: 12px 10px 32px; }
 }
 
-/* ========================================
-   头部
-   ======================================== */
-.header {
+/* ============================================
+   导航
+   ============================================ */
+.nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 12px;
-  flex-wrap: wrap;
+  padding: 8px 0;
+  margin-bottom: 28px;
 }
-.header h1 {
-  font-size: 24px;
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.nav-logo {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+}
+.nav-text {
+  font-size: 16px;
   font-weight: 700;
+  color: var(--text);
   letter-spacing: -0.3px;
 }
-.header-actions { display: flex; gap: 8px; }
-
-.btn-hd {
-  padding: 8px 16px;
-  border-radius: var(--radius3);
-  font-size: 13px;
+.nav-sub {
+  font-size: 11px;
   font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
+  color: var(--text3);
+  margin-left: 4px;
+}
+.nav-actions { display: flex; gap: 6px; align-items: center; }
+.nav-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--bg2);
+  background: var(--surface);
   color: var(--text2);
-  min-height: 36px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
 }
-.btn-hd:hover { background: var(--bg3); }
-.btn-logout {
-  padding: 8px 16px;
-  border-radius: var(--radius3);
+.nav-btn:hover { background: var(--surface2); border-color: var(--primary-lighter); }
+.logout-btn {
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(239,68,68,0.15);
+  background: rgba(239,68,68,0.06);
+  color: var(--danger);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid rgba(220,53,69,0.25);
-  background: rgba(220,53,69,0.08);
-  color: var(--danger);
-  min-height: 36px;
   transition: var(--transition);
 }
-.btn-logout:hover { background: rgba(220,53,69,0.15); }
+.logout-btn:hover { background: rgba(239,68,68,0.12); }
 
-/* ========================================
-   输入区域
-   ======================================== */
-.input-group { margin-bottom: 20px; }
-.input-row { display: flex; gap: 10px; }
-.input-wrapper {
+/* ============================================
+   头部
+   ============================================ */
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.hero h1 span {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .hero h1 { font-size: 22px; }
+}
+
+/* ============================================
+   平台条
+   ============================================ */
+.platform-bar {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.platform-chip {
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: var(--surface2);
+  border: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--text2);
+  cursor: default;
+  transition: var(--transition);
+}
+.platform-chip:hover {
+  background: var(--surface3);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* ============================================
+   输入区
+   ============================================ */
+.input-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px 20px;
+  margin-bottom: 16px;
+  transition: var(--transition);
+}
+.input-box:focus-within {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px rgba(124,92,252,0.08);
+}
+.input-box.detected {
+  border-color: var(--primary-light);
+}
+
+.input-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.input-badge {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: var(--surface3);
+  color: var(--text3);
+  opacity: 0;
+  transition: var(--transition);
+}
+.input-badge.show { opacity: 1; }
+
+.input-row {
+  display: flex;
+  gap: 10px;
+}
+.input-wrap {
   flex: 1;
   position: relative;
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  transition: var(--transition);
-  background: var(--bg2);
 }
-.input-wrapper:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(102,126,234,0.12);
-}
-.input-wrapper input {
+.input-wrap input {
   width: 100%;
-  padding: 16px 85px 16px 18px;
-  border: none;
-  border-radius: 14px;
+  padding: 13px 68px 13px 16px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
   font-size: 15px;
+  font-family: var(--font);
   outline: none;
-  background: transparent;
+  background: var(--surface2);
   color: var(--text);
+  transition: var(--transition);
 }
-.input-wrapper input::placeholder { color: var(--text3); }
+.input-wrap input::placeholder { color: var(--text3); }
+.input-wrap input:focus {
+  background: var(--surface);
+  border-color: var(--primary-lighter);
+}
 .btn-clear {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: none;
-  background: rgba(220,53,69,0.1);
-  color: var(--danger);
-  border-radius: var(--radius3);
+  border-radius: 6px;
+  background: var(--surface3);
+  color: var(--text3);
   font-size: 12px;
   cursor: pointer;
   display: none;
-  min-height: 32px;
   transition: var(--transition);
+  min-height: 26px;
 }
-.btn-clear:hover { background: rgba(220,53,69,0.2); }
-.btn-parse {
+.btn-clear:hover { background: var(--border); color: var(--text2); }
+
+.btn-go {
   padding: 0 28px;
-  background: linear-gradient(135deg, var(--primary), #764ba2);
-  color: #fff;
   border: none;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary), #9168e8);
+  color: #fff;
   font-size: 15px;
   font-weight: 600;
+  font-family: var(--font);
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
-  min-height: 50px;
+  min-height: 46px;
 }
-.btn-parse:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102,126,234,0.4); }
-.btn-parse:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-go:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124,92,252,0.3);
+}
+.btn-go:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .input-box { padding: 14px; }
   .input-row { flex-wrap: wrap; }
-  .input-wrapper { width: 100%; }
-  .btn-parse { width: 100%; padding: 14px; }
+  .input-wrap { width: 100%; }
+  .btn-go { width: 100%; padding: 12px; }
 }
 
-/* ========================================
-   加载/错误
-   ======================================== */
-.loading { text-align:center; padding:40px; display:none; }
-.loading.active { display:block; }
-.spinner {
-  width:36px; height:36px;
-  border:3px solid var(--border); border-top-color: var(--primary);
-  border-radius:50%; animation: spin .8s linear infinite;
-  margin:0 auto;
+.hint-btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
-.spinner-sm { width:16px; height:16px; border-width:2px; display:inline-block; vertical-align:middle; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.loading p { margin-top:12px; color: var(--text2); font-size:14px; }
-.error {
-  background: rgba(220,53,69,0.08);
-  color: var(--danger);
-  padding: 16px 20px;
-  border-radius: var(--radius2);
-  margin-top: 20px;
+.hint-btns button {
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 11px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.hint-btns button:hover {
+  border-color: var(--primary-lighter);
+  color: var(--primary);
+}
+
+/* ============================================
+   加载 / 错误
+   ============================================ */
+.loading {
   display: none;
-  border: 1px solid rgba(220,53,69,0.15);
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px;
 }
-.error.active { display: block; }
+.loading.active { display: flex; }
 
-/* ========================================
-   结果区
-   ======================================== */
-.result { margin-top: 24px; display: none; animation: fadeUp .35s ease; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { margin-top: 12px; font-size: 14px; color: var(--text2); }
+.loading .sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+.error-box {
+  display: none;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.12);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-top: 12px;
+}
+.error-box.active { display: block; }
+.error-box .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.error-box .detail {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* ============================================
+   结果
+   ============================================ */
+.result {
+  display: none;
+  margin-top: 4px;
+}
 .result.active { display: block; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
-/* ======= 媒体信息卡片 ======= */
-.media-card {
-  background: var(--card);
-  border-radius: var(--radius);
+.card {
+  background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 16px;
+  box-shadow: var(--shadow-md);
 }
 
-/* 封面横幅 */
-.media-cover-wrap {
+/* 封面 */
+.cover {
   position: relative;
   width: 100%;
   height: 280px;
-  background: var(--bg3);
+  background: var(--surface2);
   overflow: hidden;
 }
-.media-cover-wrap img {
-  width: 100%;
-  height: 100%;
+.cover img {
+  width: 100%; height: 100%;
   object-fit: cover;
   display: block;
 }
-.media-cover-wrap .cover-gradient {
+.cover .gradient {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 60%;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  background: linear-gradient(to top, rgba(26,21,40,0.75), transparent);
 }
-.media-cover-wrap .cover-badges {
+body.dark .cover .gradient {
+  background: linear-gradient(to top, rgba(15,13,26,0.85), transparent);
+}
+.cover .badges {
   position: absolute;
-  top: 16px; left: 16px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  top: 14px; left: 14px;
+  display: flex; gap: 6px;
 }
-.platform-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
+.cover .badge {
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 12px;
   font-weight: 600;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-}
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  background: rgba(0,0,0,0.5);
+  background: rgba(255,255,255,0.15);
   color: #fff;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
 }
-
-/* 标题漂浮在封面上 */
-.media-title-overlay {
+.cover .title-overlay {
   position: absolute;
   bottom: 20px; left: 20px; right: 20px;
   color: #fff;
 }
-.media-title-overlay h2 {
-  font-size: 20px;
-  font-weight: 600;
+.cover .title-overlay h2 {
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1.4;
   text-shadow: 0 2px 8px rgba(0,0,0,0.3);
   display: -webkit-box;
@@ -301,80 +451,65 @@ body {
   overflow: hidden;
 }
 
-/* 作者信息栏 */
-.media-author-bar {
+/* 作者 */
+.author {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border);
 }
-.author-avatar {
-  width: 44px; height: 44px;
+.author img {
+  width: 40px; height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--bg3);
+  background: var(--surface2);
   flex-shrink: 0;
 }
-.author-info { flex:1; min-width:0; }
-.author-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-}
-.author-id {
-  font-size: 13px;
-  color: var(--text2);
-  margin-top: 2px;
-}
-.proxy-info {
-  font-size: 11px;
-  color: var(--text3);
-  margin-top: 3px;
-}
-
-/* ======= 内容统计 ======= */
-.media-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border-bottom: 1px solid var(--border);
-}
-.stat-item {
-  background: var(--card);
-  padding: 14px 10px;
-  text-align: center;
-}
-.stat-item .stat-num {
+.author .ph {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
+  flex-shrink: 0;
 }
-.stat-item .stat-label {
-  font-size: 12px;
-  color: var(--text2);
-  margin-top: 2px;
-}
+.author .info { flex: 1; min-width: 0; }
+.author .name { font-size: 14px; font-weight: 600; }
+.author .id { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.author .tag { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
-@media (max-width: 480px) {
-  .media-cover-wrap { height: 200px; }
-  .media-title-overlay h2 { font-size: 17px; }
-  .media-stats { grid-template-columns: repeat(2, 1fr); }
-  .media-author-bar { padding: 12px 16px; }
+/* 统计 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
 }
+.stat {
+  text-align: center;
+  padding: 14px 8px;
+  border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.stat .num { font-size: 18px; font-weight: 700; }
+.stat .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
-/* ======= 下载操作区 ======= */
-.download-section {
+/* 下载 */
+.dl-box {
   padding: 16px 20px;
 }
-.download-section-title {
-  font-size: 14px;
+.dl-title {
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text3);
   margin-bottom: 10px;
 }
-.download-btn-group {
+.dl-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -384,166 +519,198 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
-  border-radius: var(--radius3);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 500;
+  font-family: var(--font);
   cursor: pointer;
   transition: var(--transition);
   border: none;
   text-decoration: none;
   min-height: 38px;
 }
-.btn-dl.primary { background: linear-gradient(135deg,var(--primary),#764ba2); color:#fff; }
-.btn-dl.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.35); }
-.btn-dl.success { background: rgba(40,167,69,0.1); color: var(--success); border:1px solid rgba(40,167,69,0.2); }
-.btn-dl.success:hover { background: rgba(40,167,69,0.18); }
-.btn-dl.info { background: rgba(102,126,234,0.08); color: var(--primary); border:1px solid rgba(102,126,234,0.2); }
-.btn-dl.info:hover { background: rgba(102,126,234,0.15); }
-.btn-dl.warning { background: rgba(212,160,0,0.1); color: var(--warning); border:1px solid rgba(212,160,0,0.2); }
-.btn-dl.warning:hover { background: rgba(212,160,0,0.18); }
-.btn-dl.outline { background: transparent; color: var(--text2); border:1px solid var(--border); }
-.btn-dl.outline:hover { background: var(--bg3); }
+.btn-dl.primary { background: linear-gradient(135deg,var(--primary),#9168e8); color:#fff; }
+.btn-dl.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,92,252,0.3); }
+.btn-dl.outline { background: var(--surface); color: var(--text2); border: 1px solid var(--border); }
+.btn-dl.outline:hover { border-color: var(--primary-lighter); color: var(--primary); }
+.btn-dl.green { background: rgba(16,185,129,0.08); color: var(--success); border: 1px solid rgba(16,185,129,0.15); }
+.btn-dl.green:hover { background: rgba(16,185,129,0.14); }
+.btn-dl.blue { background: rgba(99,102,241,0.08); color: var(--info); border: 1px solid rgba(99,102,241,0.15); }
+.btn-dl.blue:hover { background: rgba(99,102,241,0.14); }
+.btn-dl.amber { background: rgba(245,158,11,0.08); color: var(--warning); border: 1px solid rgba(245,158,11,0.15); }
+.btn-dl.amber:hover { background: rgba(245,158,11,0.14); }
 .btn-dl:disabled { opacity:.4; cursor:not-allowed; transform:none!important; }
 
-@media (max-width: 480px) {
-  .btn-dl { padding: 11px 18px; font-size: 14px; min-height: 44px; flex:1; }
-  .download-section { padding: 12px 16px; }
-}
-
-/* ======= 图片预览区 ======= */
-.image-preview-section {
+/* 缩略图 */
+.thumbs {
   padding: 0 20px 16px;
 }
-.image-preview-section .section-header {
+.thumbs .hd {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
-.image-preview-section .section-title {
-  font-size: 14px;
+.thumbs .hd .lbl {
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text3);
+}
+.thumbs .hd button {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text2);
-}
-.image-thumb-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
-}
-.image-thumb-grid .thumb-item {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius3);
-  overflow: hidden;
   cursor: pointer;
-  background: var(--bg3);
+  font-family: var(--font);
   transition: var(--transition);
 }
-.image-thumb-grid .thumb-item:hover { transform: scale(1.03); }
-.image-thumb-grid .thumb-item img {
-  width: 100%; height: 100%;
-  object-fit: cover;
+.thumbs .hd button:hover { border-color: var(--primary-lighter); color: var(--primary); }
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
 }
-.image-thumb-grid .thumb-item .thumb-count {
-  position: absolute;
-  bottom: 6px; right: 6px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
+.thumb-item {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: var(--transition);
 }
-/* 如果图片很多显示 "+N" */
-.image-thumb-grid .thumb-more {
+.thumb-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.thumb-item:hover { transform: scale(1.03); }
+.thumb-more {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg3);
-  border-radius: var(--radius3);
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
   aspect-ratio: 1;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--text3);
   cursor: pointer;
-  transition: var(--transition);
+  border: 1px dashed var(--border);
 }
-.image-thumb-grid .thumb-more:hover { background: var(--border); }
+.thumb-more:hover { background: var(--surface3); color: var(--text2); border-color: var(--primary-lighter); }
 
-@media (max-width: 480px) {
-  .image-thumb-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
-}
-
-/* ========================================
-   底部操作栏
-   ======================================== */
-.action-toolbar {
+/* 工具栏 */
+.actions {
   display: flex;
-  gap: 8px;
-  padding: 14px 20px;
+  gap: 6px;
+  padding: 12px 20px;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
 
-/* ========================================
-   模态框
-   ======================================== */
+/* ============================================
+   模态框通用
+   ============================================ */
 .toast {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  background: var(--text); color: #fff;
-  padding: 10px 22px; border-radius: var(--radius2);
-  font-size: 14px; z-index: 999;
-  opacity: 0; transition: opacity .3s; pointer-events: none;
+  position: fixed;
+  top: 16px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--surface);
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-50%) translateY(-4px);
 }
-.toast.show { opacity:1; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 .modal-overlay {
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000; display: none;
-  align-items: center; justify-content: center;
+  position: fixed; inset: 0;
+  background: rgba(26,21,40,0.4);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
   padding: 16px;
 }
+body.dark .modal-overlay { background: rgba(0,0,0,0.55); }
 .modal-overlay.active { display: flex; }
-.modal-wrap {
-  background: var(--bg2);
-  border-radius: var(--radius);
-  max-width: 640px; width: 100%;
-  max-height: 85vh; overflow: hidden;
-  display: flex; flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 660px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(26,21,40,0.15);
 }
-.modal-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 18px 22px; border-bottom: 1px solid var(--border);
+.modal-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
 }
-.modal-head h3 { font-size: 17px; font-weight: 600; }
+.modal-hd h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .modal-close {
-  width:32px; height:32px; border:none;
-  background: var(--bg3); border-radius:50%;
-  font-size: 18px; cursor: pointer;
-  color: var(--text2); transition: var(--transition);
-  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
 }
-.modal-close:hover { background: var(--border); }
+.modal-close:hover { background: var(--surface3); color: var(--text2); }
 .modal-body { flex:1; overflow-y: auto; padding: 18px 22px; }
+.modal-foot {
+  display: flex;
+  gap: 8px; justify-content: flex-end;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
 
 /* 详情表格 */
 .detail-table { width:100%; border-collapse: collapse; }
-.detail-table tr { border-bottom: 1px solid var(--border); }
+.detail-table tr { border-bottom: 1px solid var(--border-light); }
 .detail-table tr:last-child { border-bottom: none; }
 .detail-table td {
-  padding: 10px 8px;
+  padding: 9px 8px;
   vertical-align: top;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 .detail-table td:first-child {
-  width: 90px;
+  width: 80px;
   color: var(--text2);
   font-weight: 500;
   white-space: nowrap;
 }
-.detail-table td:last-child { color: var(--text); word-break: break-all; }
+.detail-table td:last-child { word-break: break-all; }
+.detail-sec {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text3);
+  padding: 14px 8px 6px;
+}
 .detail-url {
   display: inline-block;
   max-width: 100%;
@@ -552,156 +719,193 @@ body {
   white-space: nowrap;
   color: var(--primary);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12px;
 }
 .detail-url:hover { text-decoration: underline; }
-.detail-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  padding: 12px 8px 6px;
-  letter-spacing: 0.5px;
-}
 
-/* 预览模态框 */
-.preview-modal-wrap { max-width: 800px; }
+/* 预览 */
 .preview-tabs {
-  display: flex; gap: 4px;
-  background: var(--bg3); border-radius: var(--radius3);
-  padding: 4px; margin-bottom: 14px;
+  display: flex;
+  gap: 4px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 14px;
 }
 .preview-tab {
-  flex:1; padding: 8px 0;
+  flex:1; padding: 7px 0;
   text-align: center;
-  border: none; border-radius: 6px;
-  font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: var(--transition);
-  background: transparent; color: var(--text2);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: var(--transition);
+  background: transparent;
+  color: var(--text3);
 }
-.preview-tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.preview-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.preview-tab:disabled { opacity: .4; cursor: not-allowed; }
 .preview-panel { display: none; }
 .preview-panel.active { display: block; }
-.preview-video-wrap {
-  background: #000; border-radius: var(--radius3); overflow: hidden;
+
+.video-wrap {
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
   position: relative;
 }
-.preview-video-wrap video { width:100%; max-height:65vh; display:block; }
+.video-wrap video { width:100%; max-height:55vh; display:block; }
 .video-loading {
   position: absolute; inset:0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.7); color: #fff;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
   z-index: 10;
 }
+.video-loading .sp { width:28px;height:28px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite; }
+.video-loading p { margin-top:8px; font-size:13px; }
 .video-loading.hidden { display:none; }
-.video-loading p { margin-top:10px; font-size:14px; }
 
-.image-preview-header {
+.img-hd {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-.image-preview-header .counter { font-size: 14px; color: var(--text2); }
-.image-grid {
+.img-hd .ct { font-size:13px; color:var(--text2); }
+.img-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-  max-height: 50vh; overflow-y: auto;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 2px;
 }
-.image-item {
+.img-item {
   position: relative;
   aspect-ratio: 1;
-  background: var(--bg3);
-  border-radius: var(--radius3);
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   cursor: pointer;
+  transition: var(--transition);
 }
-.image-item img { width:100%; height:100%; object-fit:cover; }
-.image-item .check {
-  position: absolute; top:8px; right:8px;
-  width:26px; height:26px; border-radius:50%;
-  background: rgba(0,0,0,0.5); color:#fff;
-  display: flex; align-items:center; justify-content:center;
-  font-size:14px; opacity:0; transition: opacity .2s;
+.img-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.img-item .ck {
+  position: absolute; top:6px; right:6px;
+  width:22px; height:22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.4);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  opacity: 0;
+  transition: var(--transition);
 }
-.image-item:hover .check { opacity:1; }
-.image-item.selected .check { opacity:1; background: var(--primary); }
-.image-item.selected { box-shadow: 0 0 0 3px var(--primary); }
-.image-item .dl-overlay {
+.img-item:hover .ck { opacity: 1; }
+.img-item.selected .ck { opacity: 1; background: var(--primary); }
+.img-item.selected { box-shadow: 0 0 0 2px var(--primary); }
+.img-item .dl-overlay {
   position: absolute; bottom:0; left:0; right:0;
-  height: 40px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  height: 32px;
+  background: linear-gradient(to top, rgba(0,0,0,.55), transparent);
   display: flex; align-items: flex-end; justify-content: center;
-  padding-bottom: 8px;
-  opacity:0; transition: opacity .2s; cursor:pointer;
+  padding-bottom: 5px;
+  opacity: 0;
+  transition: opacity .2s;
+  cursor: pointer;
 }
-.image-item:hover .dl-overlay { opacity:1; }
+.img-item:hover .dl-overlay { opacity: 1; }
 
-.modal-foot {
-  display: flex; gap: 8px; justify-content: flex-end;
-  padding: 14px 22px; border-top: 1px solid var(--border);
+/* 音频 */
+.audio-wrap { text-align:center; padding:20px; }
+.audio-wrap .fn { font-size:14px; font-weight:600; margin-bottom:4px; word-break:break-all; }
+.audio-wrap .sz { font-size:12px; color: var(--text2); margin-bottom:16px; }
+.audio-wrap .dl-btn {
+  display: inline-flex; align-items:center; gap:8px;
+  padding: 10px 28px;
+  background: linear-gradient(135deg,var(--primary),#9168e8);
+  color:#fff; border:none; border-radius:var(--radius-md);
+  font-size:14px; font-weight:600; font-family:var(--font);
+  cursor:pointer; transition:var(--transition);
+  box-shadow: 0 4px 14px rgba(124,92,252,.2);
 }
+.audio-wrap .dl-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,92,252,.3); }
+.audio-wrap .dl-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 
-/* ========================================
-   进度提示
-   ======================================== */
+/* 进度 */
 .progress-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4); z-index: 2000;
-  display: none; align-items: center; justify-content: center;
+  position:fixed; inset:0;
+  background: rgba(26,21,40,.4);
+  z-index:8000;
+  display:none; align-items:center; justify-content:center;
+  padding:16px;
 }
-.progress-overlay.active { display: flex; }
+.progress-overlay.active { display:flex; }
 .progress-box {
-  background: var(--bg2); border-radius: var(--radius);
-  padding: 24px 28px; min-width: 320px; max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  min-width: 300px;
+  max-width: 380px;
+  box-shadow: 0 16px 48px rgba(26,21,40,.15);
+  text-align:center;
 }
-.progress-box h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.progress-box .sub { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+.progress-box h3 { font-size:15px; font-weight:700; margin-bottom:4px; }
+.progress-box .sub { font-size:12px; color:var(--text2); margin-bottom:12px; }
 .progress-track {
-  width:100%; height:6px;
-  background: var(--bg3); border-radius: 3px;
-  overflow: hidden; margin-bottom: 8px;
+  width:100%; height:5px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
 }
 .progress-fill {
   height:100%;
-  background: linear-gradient(135deg, var(--primary), #764ba2);
-  border-radius: 3px; transition: width .3s; width:0%;
+  background: linear-gradient(135deg, var(--primary), #9168e8);
+  border-radius: 3px;
+  transition: width .25s ease;
+  width:0%;
 }
-.progress-box .stats { font-size: 13px; color: var(--text2); }
+.progress-box .st { font-size:12px; color:var(--text2); }
 .progress-box .cancel-btn {
-  margin-top: 12px; padding: 6px 20px;
-  background: var(--bg3); border: none; border-radius: var(--radius3);
-  font-size: 13px; color: var(--text2); cursor: pointer;
+  margin-top:10px;
+  padding:5px 16px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background: var(--surface);
+  color: var(--text3);
+  font-size:12px;
+  font-family: var(--font);
+  cursor:pointer;
+  transition: var(--transition);
 }
-.progress-box .cancel-btn:hover { background: var(--border); }
+.progress-box .cancel-btn:hover { border-color: var(--danger); color: var(--danger); }
 
-/* ========================================
-   音频模态框
-   ======================================== */
-.audio-wrap { text-align: center; padding: 20px; }
-.audio-wrap .fname { font-size: 16px; font-weight: 600; margin-bottom: 6px; word-break:break-all; }
-.audio-wrap .fsize { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
-.audio-wrap .dl-btn {
-  display: inline-flex; align-items:center; gap:8px;
-  padding: 12px 32px;
-  background: linear-gradient(135deg, var(--primary), #764ba2);
-  color: #fff; border: none; border-radius: var(--radius3);
-  font-size: 15px; font-weight: 600; cursor: pointer;
-  text-decoration: none; transition: var(--transition);
-}
-.audio-wrap .dl-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102,126,234,0.4); }
-.audio-wrap .dl-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-
-/* ========================================
-   页脚
-   ======================================== */
+/* 页脚 */
 .footer {
-  margin-top: 28px; padding-top: 20px;
-  border-top: 1px solid var(--border);
-  text-align: center; font-size: 13px; color: var(--text3);
+  text-align: center;
+  padding: 28px 0 4px;
+  font-size: 12px;
+  color: var(--text3);
 }
-.footer .version { margin-bottom: 4px; }
+.footer a {
+  color: var(--text3);
+  text-decoration: none;
+  margin: 0 8px;
+  transition: var(--transition);
+}
+.footer a:hover { color: var(--primary); }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -709,756 +913,709 @@ body {
 <div class="toast" id="toast"></div>
 
 <div class="progress-overlay" id="progressOverlay">
-<div class="progress-box">
-  <h3 id="progressTitle">正在下载...</h3>
-  <div class="sub" id="progressSub"></div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="stats" id="progressStats"></div>
-  <button class="cancel-btn" onclick="cancelBatchDownload()">取消下载</button>
-</div>
+  <div class="progress-box">
+    <h3 id="pTitle">正在下载...</h3>
+    <div class="sub" id="pSub"></div>
+    <div class="progress-track"><div class="progress-fill" id="pFill"></div></div>
+    <div class="st" id="pStats"></div>
+    <button class="cancel-btn" onclick="cancelBatch()">取消下载</button>
+  </div>
 </div>
 
-<!-- 详情模态框 -->
+<!-- 详情 -->
 <div class="modal-overlay" id="detailModal">
-<div class="modal-wrap">
-  <div class="modal-head"><h3>媒体详情</h3><button class="modal-close" onclick="closeDetail()">&times;</button></div>
-  <div class="modal-body" id="detailBody"></div>
-  <div class="modal-foot"><button class="btn-dl outline" onclick="closeDetail()">关闭</button></div>
-</div>
+  <div class="modal">
+    <div class="modal-hd"><h3>📋 详情</h3><button class="modal-close" onclick="closeDetail()">×</button></div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot"><button class="btn-dl outline" onclick="closeDetail()">关闭</button></div>
+  </div>
 </div>
 
-<!-- 预览模态框 -->
+<!-- 预览 -->
 <div class="modal-overlay" id="previewModal">
-<div class="modal-wrap preview-modal-wrap">
-  <div class="modal-head"><h3>预览</h3><button class="modal-close" onclick="closePreview()">&times;</button></div>
-  <div class="modal-body">
-    <div class="preview-tabs" id="previewTabs">
-      <button class="preview-tab active" data-tab="video">视频</button>
-      <button class="preview-tab" data-tab="image">图片</button>
-    </div>
-    <div class="preview-panel active" id="videoPanel">
-      <div class="preview-video-wrap">
-        <div class="video-loading" id="videoLoading"><div class="spinner"></div><p>正在缓冲...</p></div>
-        <video id="previewVideo" controls playsinline webkit-playsinline preload="auto"></video>
+  <div class="modal" style="max-width:720px">
+    <div class="modal-hd"><h3>👁️ 预览</h3><button class="modal-close" onclick="closePreview()">×</button></div>
+    <div class="modal-body">
+      <div class="preview-tabs" id="previewTabs">
+        <button class="preview-tab active" data-tab="video">🎬 视频</button>
+        <button class="preview-tab" data-tab="image">🖼️ 图片</button>
       </div>
-    </div>
-    <div class="preview-panel" id="imagePanel">
-      <div class="image-preview-header">
-        <span class="counter" id="imageCounter">已选 0 张</span>
-        <div style="display:flex;gap:8px">
-          <button class="btn-dl outline" onclick="selectAllImages()">全选</button>
-          <button class="btn-dl outline" onclick="deselectAllImages()">取消</button>
+      <div class="preview-panel active" id="videoPanel">
+        <div class="video-wrap">
+          <div class="video-loading" id="vLoading"><div class="sp"></div><p>缓冲中...</p></div>
+          <video id="previewVideo" controls playsinline webkit-playsinline preload="auto"></video>
         </div>
       </div>
-      <div class="image-grid" id="imageGrid"></div>
-    </div>
-  </div>
-  <div class="modal-foot">
-    <button class="btn-dl outline" onclick="closePreview()">关闭</button>
-    <button class="btn-dl primary" onclick="downloadSelectedFromPreview()">下载选中</button>
-  </div>
-</div>
-</div>
-
-<!-- 音频模态框 -->
-<div class="modal-overlay" id="audioModal">
-<div class="modal-wrap" style="max-width:400px">
-  <div class="modal-head"><h3>下载音频</h3><button class="modal-close" onclick="closeAudioModal()">&times;</button></div>
-  <div class="modal-body">
-    <div class="audio-wrap">
-      <div class="fname" id="audioFilename"></div>
-      <div class="fsize" id="audioFileSize">获取中...</div>
-      <button class="dl-btn" id="audioDownloadBtn" onclick="doAudioDownload()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载音频
-      </button>
-    </div>
-  </div>
-  <div class="modal-foot"><button class="btn-dl outline" onclick="closeAudioModal()">关闭</button></div>
-</div>
-</div>
-
-<div class="container">
-  <div class="header">
-    <h1>多平台媒体解析</h1>
-    <div class="header-actions">
-      <button class="btn-hd" onclick="toggleDarkMode()" id="darkModeBtn">🌙 黑夜</button>
-      <button class="btn-logout" onclick="logout()">登出</button>
-    </div>
-  </div>
-
-  <div class="input-group">
-    <div class="input-row">
-      <div class="input-wrapper">
-        <input type="text" id="urlInput" placeholder="粘贴媒体链接（抖音/快手/小红书/微博等）...">
-        <button class="btn-clear" onclick="clearUrl()">清除</button>
+      <div class="preview-panel" id="imagePanel">
+        <div class="img-hd">
+          <span class="ct" id="imgCt">已选 0 张</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-dl outline" onclick="selAll()" style="min-height:30px;padding:4px 10px;font-size:12px;">全选</button>
+            <button class="btn-dl outline" onclick="deselAll()" style="min-height:30px;padding:4px 10px;font-size:12px;">取消</button>
+          </div>
+        </div>
+        <div class="img-grid" id="imgGrid"></div>
       </div>
-      <button class="btn-parse" id="parseBtn" onclick="parseVideo()">解析</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-dl outline" onclick="closePreview()">关闭</button>
+      <button class="btn-dl primary" onclick="dlSelectedPreview()">下载选中</button>
+    </div>
+  </div>
+</div>
+
+<!-- 音频 -->
+<div class="modal-overlay" id="audioModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><h3>🎵 音频</h3><button class="modal-close" onclick="closeAudio()">×</button></div>
+    <div class="modal-body">
+      <div class="audio-wrap">
+        <div class="fn" id="audioFn"></div>
+        <div class="sz" id="audioSz">获取中...</div>
+        <button class="dl-btn" id="audioBtn" onclick="doAudio()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载
+        </button>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn-dl outline" onclick="closeAudio()">关闭</button></div>
+  </div>
+</div>
+
+<!-- 页面主体 -->
+<div class="wrap">
+
+  <nav class="nav">
+    <a class="nav-brand" href="#">
+      <span class="nav-logo">✦</span>
+      <span class="nav-text">cf-media-parser</span>
+      <span class="nav-sub">v3.2</span>
+    </a>
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="toggleDark()" id="darkBtn" title="深色模式">🌙</button>
+      <button class="logout-btn" onclick="logout()">登出</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1><span>粘贴链接</span>，即刻解析</h1>
+    <p>抖音 · 快手 · 小红书 · 微博 · YouTube · 西瓜 · 好看 · 知乎 · 皮皮虾 · 全民K歌 · AcFun</p>
+  </div>
+
+  <div class="platform-bar">
+    <span class="platform-chip">🎵 抖音</span>
+    <span class="platform-chip">🎬 快手</span>
+    <span class="platform-chip">📕 小红书</span>
+    <span class="platform-chip">📱 微博</span>
+    <span class="platform-chip">▶️ YouTube</span>
+    <span class="platform-chip">🍉 西瓜</span>
+    <span class="platform-chip">👀 好看</span>
+    <span class="platform-chip">💡 知乎</span>
+    <span class="platform-chip">🦐 皮皮虾</span>
+    <span class="platform-chip">🎤 全民K歌</span>
+    <span class="platform-chip">🔴 AcFun</span>
+  </div>
+
+  <div class="input-box" id="inputBox">
+    <div class="input-top">
+      <span class="input-label">🔗 链接</span>
+      <span class="input-badge" id="detectBadge"></span>
+    </div>
+    <div class="input-row">
+      <div class="input-wrap">
+        <input type="text" id="urlInput" placeholder="粘贴平台分享链接，如 https://www.douyin.com/video/..." autocomplete="off">
+        <button class="btn-clear" onclick="clearUrl()">✕</button>
+      </div>
+      <button class="btn-go" id="parseBtn" onclick="parse()">解析</button>
+    </div>
+    <div class="hint-btns">
+      <button onclick="fillEg('https://www.douyin.com/video/')">抖音</button>
+      <button onclick="fillEg('https://www.kuaishou.com/short-video/')">快手</button>
+      <button onclick="fillEg('https://www.xiaohongshu.com/explore/')">小红书</button>
+      <button onclick="fillEg('https://weibo.com/')">微博</button>
+      <button onclick="fillEg('https://youtu.be/')">YouTube</button>
     </div>
   </div>
 
-  <div class="loading" id="loading"><div class="spinner"></div><p>正在解析...</p></div>
-  <div class="error" id="error"></div>
-
-  <div class="result" id="result">
-    <!-- 由 JS 动态渲染 -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p id="loadLabel">解析中...</p>
+    <div class="sub" id="loadSub">请求服务器</div>
   </div>
+
+  <div class="error-box" id="error">
+    <div class="title">⚠️ 解析失败</div>
+    <div class="detail" id="errorDetail"></div>
+  </div>
+
+  <div class="result" id="result"></div>
 
   <div class="footer">
-    <div class="version">v3.0.0</div>
-    <div class="copyright">© 2026 多平台媒体解析工具</div>
+    <a href="https://github.com/jidanbings/cf-media-parser" target="_blank">GitHub</a>
+    cf-media-parser · Cloudflare Workers · 仅限学习
   </div>
+
 </div>
 
 <script>
-// ========================================
-// 状态
-// ========================================
-let urlInput = document.getElementById('urlInput');
-let parseBtn = document.getElementById('parseBtn');
-let clearBtn = document.querySelector('.btn-clear');
-let loading = document.getElementById('loading');
-let error = document.getElementById('error');
-let result = document.getElementById('result');
-let toast = document.getElementById('toast');
+// ============================================
+// 平台
+// ============================================
+const P = [
+  { n:'抖音',   i:'🎵', c:'#333',     d:['douyin.com'] },
+  { n:'快手',   i:'🎬', c:'#FF4906',  d:['kuaishou.com','chenzhongtech.com'] },
+  { n:'小红书', i:'📕', c:'#FF2442',  d:['xiaohongshu.com'] },
+  { n:'微博',   i:'📱', c:'#E6162D',  d:['weibo.com','weibo.cn'] },
+  { n:'TikTok', i:'🎵', c:'#000',     d:['tiktok.com'] },
+  { n:'YouTube',i:'▶️',c:'#FF0000',   d:['youtube.com','youtu.be'] },
+  { n:'西瓜视频',i:'🍉',c:'#00B43D',  d:['ixigua.com'] },
+  { n:'好看视频',i:'👀',c:'#06F',     d:['haokan.baidu.com'] },
+  { n:'知乎',   i:'💡', c:'#06F',     d:['zhihu.com','zhuanlan.zhihu.com'] },
+  { n:'皮皮虾', i:'🦐', c:'#FF6A00',  d:['pipix.com'] },
+  { n:'全民K歌',i:'🎤', c:'#FFC107',  d:['kg.qq.com'] },
+  { n:'AcFun',  i:'🔴', c:'#FD4C5D',  d:['acfun.cn'] },
+];
+const allDomains = P.flatMap(p => p.d);
 
-let currentVideoUrl = '';
-let currentImages = [];
-let selectedImages = [];
-let currentTs = '';
-let currentPn = '';
-let currentAudioUrl = '';
-let currentAudioFilename = '';
-let batchCancelFlag = false;
+// ============================================
+// DOM
+// ============================================
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const id = s => document.getElementById(s);
+const urlInput = id('urlInput');
+const parseBtn = id('parseBtn');
+const loading = id('loading');
+const loadLabel = id('loadLabel');
+const loadSub = id('loadSub');
+const error = id('error');
+const errorDetail = id('errorDetail');
+const result = id('result');
+const toast = id('toast');
+const inputBox = id('inputBox');
+const detectBadge = id('detectBadge');
+const clearBtn = document.querySelector('.btn-clear');
 
-// ========================================
-// 工具函数
-// ========================================
-function id(v) { return document.getElementById(v); }
+let curData = null;
+let curVidUrl = '';
+let curImgs = [];
+let selImgs = [];
+let curTs = '';
+let curPn = '';
+let curAudioUrl = '';
+let curAudioFn = '';
+let cancelFlag = false;
 
-function showToast(msg) { toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
+// ============================================
+// 工具
+// ============================================
+function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+function ts() { const d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+d.getTime(); }
+function mob() { return /(Android|iPhone|iPad|iPod)/i.test(navigator.userAgent) || window.innerWidth < 768; }
+function ext(u) { if(!u) return 'png'; const l=u.toLowerCase(); if(l.includes('.gif')) return 'gif'; if(l.includes('.webp')) return 'webp'; return 'png'; }
+function msg(s) { toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
 
-function extractUrl(text) {
-  let m = text.match(/https?:\/\/[^\s"<>，、']+/gi);
-  if (m) {
-    for (let u of m) {
-      let c = u.replace(/["'<>，、']+$/,'').trim();
-      let known = ['douyin.com','kuaishou.com','xiaohongshu.com','haokan.baidu.com','ixigua.com','weibo.com','weibo.cn','tiktok.com','youtube.com','youtu.be','zhihu.com','pipix.com','kg.qq.com','acfun.cn'];
-      for (let d of known) { if (c.includes(d)) return c; }
-    }
-    for (let u of m) { let c=u.replace(/["'<>，、']+$/,'').trim(); if (c.startsWith('http')) return c; }
+function detect(text) {
+  if (!text) return null;
+  for (const p of P) for (const d of p.d) if (text.includes(d)) return p;
+  return null;
+}
+
+function extract(raw) {
+  const urls = raw.match(/https?:\/\/[^\s"<>，、'》【】\[\]{}|]+/gi);
+  if (!urls) {
+    const ds = raw.match(/v\.douyin\.com\/\w+/i); if (ds) return 'https://'+ds[0];
+    const ks = raw.match(/v\.kuaishou\.com\/\w+/i); if (ks) return 'https://'+ks[0];
+    return raw.trim();
   }
-  let s = text.match(/v\.douyin\.com\/\w+/i);
-  if (s) return 'https://'+s[0];
-  return text.trim();
+  for (const u of urls) {
+    const c = u.replace(/["'<>，、》】]+$/,'').trim();
+    if (!c.startsWith('http')) continue;
+    if (allDomains.some(d => c.includes(d))) return c;
+  }
+  for (const u of urls) {
+    const c = u.replace(/["'<>，、》】]+$/,'').trim();
+    if (c.startsWith('http') && !c.includes('...')) return c;
+  }
+  return raw.trim();
 }
 
-function getTimestamp() {
-  let d=new Date();
-  return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+d.getTime();
-}
-
-function isMobile() {
-  return /(Android|iPhone|iPad|iPod|BlackBerry)/i.test(navigator.userAgent) || window.innerWidth < 768;
-}
-
-function getExt(url) {
-  if (!url) return 'png';
-  let l=url.toLowerCase();
-  if (l.includes('.gif')) return 'gif';
-  return 'png';
-}
-
-// ========================================
-// 输入事件
-// ========================================
-urlInput.addEventListener('input', function() {
-  clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+// ============================================
+// 输入
+// ============================================
+let dtimer = null;
+urlInput.addEventListener('input', () => {
+  clearBtn.style.display = urlInput.value.trim() ? 'block' : 'none';
+  clearTimeout(dtimer);
+  dtimer = setTimeout(() => {
+    const v = urlInput.value.trim();
+    if (!v) { resetDetect(); return; }
+    const p = detect(extract(v));
+    if (p) {
+      inputBox.classList.add('detected');
+      detectBadge.textContent = p.i + ' ' + p.n;
+      detectBadge.classList.add('show');
+      inputBox.style.borderColor = p.c;
+    } else {
+      resetDetect();
+    }
+  }, 300);
 });
-urlInput.addEventListener('keypress', function(e) { if (e.key==='Enter') parseVideo(); });
+urlInput.addEventListener('keypress', e => { if (e.key === 'Enter') parse(); });
+
+function resetDetect() {
+  inputBox.classList.remove('detected');
+  detectBadge.classList.remove('show');
+  inputBox.style.borderColor = '';
+}
 
 function clearUrl() {
-  urlInput.value='';
-  clearBtn.style.display='none';
-  hideError();
-  hideResult();
-  urlInput.focus();
+  urlInput.value = ''; clearBtn.style.display = 'none';
+  hideError(); hideResult(); resetDetect(); urlInput.focus();
 }
 
-// ========================================
-// 解析流程
-// ========================================
-async function parseVideo() {
-  let url = urlInput.value.trim();
-  if (!url) { showToast('请输入链接'); return; }
-  url = extractUrl(url);
-  if (!url.startsWith('http')) { showToast('无效链接'); return; }
+function fillEg(u) {
+  urlInput.value = u; clearBtn.style.display = 'block';
+  urlInput.dispatchEvent(new Event('input')); urlInput.focus();
+}
+
+// ============================================
+// 解析
+// ============================================
+async function parse() {
+  const raw = urlInput.value.trim();
+  if (!raw) { msg('请粘贴链接'); return; }
+  const url = extract(raw);
+  if (!url.startsWith('http')) { msg('未识别到链接'); return; }
+
+  const p = detect(url);
+  if (p) { loadLabel.textContent = p.i + ' ' + p.n + ' 解析中...'; loadSub.textContent = '请求服务器'; }
+  else { loadLabel.textContent = '解析中...'; loadSub.textContent = ''; }
 
   hideError(); hideResult(); showLoading();
   parseBtn.disabled = true;
 
   try {
-    let d = await getParse(url);
-    if (d && d.platform) renderResult(d);
-    else throw new Error(d?.error || '未找到媒体信息');
+    const d = await getParse(url);
+    if (d && d.platform) {
+      await new Promise(r => setTimeout(r, 300));
+      hideLoading();
+      render(d);
+    } else {
+      throw new Error(d?.error || '未找到媒体信息');
+    }
   } catch(e) {
-    showError('解析失败: '+e.message);
-  } finally {
-    hideLoading(); parseBtn.disabled = false;
-  }
+    hideLoading();
+    const m = e.message;
+    if (m.includes('403')) { showError('登录已过期，跳转中...'); setTimeout(logout, 1500); }
+    else if (m.includes('500')) { showError('服务端错误，请检查环境变量是否已配置'); }
+    else { showError(m); }
+  } finally { parseBtn.disabled = false; }
 }
 
 async function getParse(u) {
-  let r = await fetch('/api/parse?url='+encodeURIComponent(u));
-  if (r.status===403) { location.href='/'; return null; }
-  let d = await r.json();
+  const r = await fetch('/api/parse?url='+encodeURIComponent(u));
+  if (r.status===403) { logout(); return null; }
+  const d = await r.json();
   if (!r.ok) throw new Error(d.error||'解析失败');
-  return d.data||d;
+  return d.data || d;
 }
 
-// ========================================
-// 渲染结果
-// ========================================
-function renderResult(d) {
-  currentData = d;
-  currentTs = getTimestamp();
-  let platform = d.platform||'抖音';
-  let pColor = d.platformColor||'#333';
-  let pIcon = d.platformIcon||'🎵';
-  let pn = platform.toLowerCase().replace(/[^a-z0-9]/g,'');
-  currentPn = pn;
+// ============================================
+// 渲染
+// ============================================
+function render(d) {
+  curData = d;
+  curTs = ts();
+  const pf = d.platform||'抖音', pc = d.platformColor||'#333', pi = d.platformIcon||'🎵';
+  let pn = pf.toLowerCase().replace(/[^a-z0-9]/g,''); if (!pn) pn='media';
+  curPn = pn;
 
-  let type = d.type||'video';
-  let typeLabels = { video:'视频', images:'图文', gif:'动图', video_images:'视频+图文', video_gif:'视频+动图', gif_images:'动图+图文', mixed:'混合' };
-  let typeIcons = { video:'🎬', images:'🖼️', gif:'🎞️', video_images:'🎬🖼️', video_gif:'🎬🎞️', gif_images:'🎞️🖼️', mixed:'📦' };
+  const tp = d.type||'video';
+  const tl = { video:'视频', images:'图文', gif:'动图', video_images:'视频+图文', video_gif:'视频+动图', gif_images:'动图+图文', mixed:'混合' };
+  const ti = { video:'🎬', images:'🖼️', gif:'🎞️', video_images:'🎬🖼️', video_gif:'🎬🎞️', gif_images:'🎞️🖼️', mixed:'📦' };
+  const vs = d.videos||[], im = d.images||[], gs = d.gifs||[], dls = d.downloads||[];
+  const allIm = [...new Set([...gs.map(g=>g.url), ...im.map(i=>i.url)])];
+  const tlb = tl[tp]||'混合', tic = ti[tp]||'📦';
 
-  let videos = d.videos||[];
-  let images = d.images||[];
-  let gifs = d.gifs||[];
-  let downloads = d.downloads||[];
-  let allImages = [...new Set([...gifs.map(g=>g.url), ...images.map(i=>i.url)])];
-
-  // 构建 HTML
-  let html = '<div class="media-card">';
-
-  // ---- 封面 ----
-  html += '<div class="media-cover-wrap">';
-  if (d.cover) {
-    html += '<img src="/api/proxy/image?url='+encodeURIComponent(d.cover)+'" alt="封面" loading="lazy" referrerpolicy="no-referrer">';
-  } else if (allImages.length > 0) {
-    html += '<img src="/api/proxy/image?url='+encodeURIComponent(allImages[0])+'" alt="封面" loading="lazy" referrerpolicy="no-referrer">';
-  } else {
-    html += '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:48px;">'+pIcon+'</div>';
-  }
-  html += '<div class="cover-gradient"></div>';
-  html += '<div class="cover-badges">';
-  let tagBg = pColor+'22';
-  html += '<span class="platform-badge" style="background:'+tagBg+';color:'+pColor+';">'+pIcon+' '+escapeHtml(platform)+'</span>';
-  html += '<span class="type-badge">'+typeIcons[type]+' '+(typeLabels[type]||'混合')+'</span>';
-  html += '</div>';
-  html += '<div class="media-title-overlay"><h2>'+(d.title||escapeHtml(platform)+' '+(typeLabels[type]||''))+'</h2></div>';
-  html += '</div>';
-
-  // ---- 作者 ----
-  html += '<div class="media-author-bar">';
-  if (d.avatar) {
-    html += '<img class="author-avatar" src="'+escapeHtml(d.avatar)+'" alt="" loading="lazy">';
-  } else {
-    html += '<div class="author-avatar" style="display:flex;align-items:center;justify-content:center;background:'+tagBg+';color:'+pColor+';font-size:20px;">'+pIcon+'</div>';
-  }
-  html += '<div class="author-info"><div class="author-name">'+(d.author||'未知')+'</div>';
-  if (d.authorId) html += '<div class="author-id">@'+escapeHtml(d.authorId)+'</div>';
-  if (d.proxyFrom) html += '<div class="proxy-info">🔗 '+escapeHtml(d.proxyFrom)+'</div>';
-  html += '</div></div>';
-
-  // ---- 统计 ----
-  let vCount = videos.length;
-  let iCount = images.length;
-  let gCount = gifs.length;
-  let dlCount = downloads.length;
-  html += '<div class="media-stats">';
-  html += '<div class="stat-item"><div class="stat-num">'+vCount+'</div><div class="stat-label">视频</div></div>';
-  html += '<div class="stat-item"><div class="stat-num">'+gCount+'</div><div class="stat-label">动图</div></div>';
-  html += '<div class="stat-item"><div class="stat-num">'+iCount+'</div><div class="stat-label">图片</div></div>';
-  html += '<div class="stat-item"><div class="stat-num">'+dlCount+'</div><div class="stat-label">可下载</div></div>';
-  html += '</div>';
-
-  // ---- 下载按钮 ----
-  if (downloads.length > 0) {
-    html += '<div class="download-section">';
-    html += '<div class="download-section-title">⬇️ 下载</div><div class="download-btn-group">';
-    let videoN=0, gifN=0, imgN=0;
-    let totalVideo=downloads.filter(x=>x.label==='下载视频').length;
-    let totalGif=downloads.filter(x=>x.label==='下载动图').length;
-    let totalImg=downloads.filter(x=>x.label==='下载图片').length;
-
-    for (let item of downloads) {
-      if (item.label==='下载视频') {
-        videoN++;
-        let fn = currentTs+'_'+pn+'_video'+(totalVideo>1?videoN:'')+'.mp4';
-        let href = '/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn);
-        html += '<a class="btn-dl primary" href="'+href+'">🎬 视频'+(totalVideo>1?' '+videoN:'')+' '+item.quality+'</a>';
-      } else if (item.label==='下载动图') {
-        gifN++;
-        let ext = getExt(item.url);
-        let fn = currentTs+'_'+pn+'_gif'+(totalGif>1?gifN:'')+'.'+ext;
-        let href = '/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn);
-        html += '<a class="btn-dl success" href="'+href+'">🎞️ 动图'+(totalGif>1?' '+gifN:'')+'</a>';
-      } else if (item.label==='下载图片') {
-        imgN++;
-        let ext = getExt(item.url);
-        let fn = currentTs+'_'+pn+'_image'+(totalImg>1?imgN:'')+'.'+ext;
-        let href = '/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn);
-        html += '<a class="btn-dl info" href="'+href+'">🖼️ 图片'+(totalImg>1?' '+imgN:'')+'</a>';
-      }
-    }
-    html += '</div></div>';
-  }
-
-  // ---- 图片预览缩略图 ----
-  if (allImages.length > 0) {
-    html += '<div class="image-preview-section">';
-    html += '<div class="section-header">';
-    html += '<div class="section-title">🖼️ 图片预览 ('+allImages.length+' 张)</div>';
-    html += '<button class="btn-dl outline" onclick="openPreview()" style="min-height:32px;padding:4px 12px;font-size:12px;">查看全部</button>';
-    html += '</div><div class="image-thumb-grid">';
-    // 显示最多 6 张缩略图
-    let maxThumb = Math.min(allImages.length, 6);
-    for (let i = 0; i < maxThumb; i++) {
-      html += '<div class="thumb-item" onclick="openPreview()"><img src="'+escapeHtml(allImages[i])+'" alt="" loading="lazy"></div>';
-    }
-    if (allImages.length > 6) {
-      html += '<div class="thumb-more" onclick="openPreview()">+'+(allImages.length-6)+'</div>';
-    }
-    html += '</div></div>';
-  }
-
-  // ---- 底部工具栏 ----
-  html += '<div class="action-toolbar">';
-
-  // 预览按钮
-  let hasVideo = videos.length > 0 && videos[0].url;
-  if (hasVideo || allImages.length > 0) {
-    html += '<button class="btn-dl warning" onclick="openPreview()">👁️ 预览</button>';
-  }
-
-  // 批量下载
-  if (allImages.length > 1) {
-    if (isMobile()) {
-      html += '<button class="btn-dl info" onclick="downloadImagesAsZip(allImages,'+"'"+currentTs+"','"+pn+"'"+')">📦 打包('+allImages.length+')</button>';
-    } else {
-      html += '<button class="btn-dl info" onclick="batchDownloadImages(allImages,'+"'"+currentTs+"','"+pn+"'"+')">📥 批量('+allImages.length+')</button>';
-      html += '<button class="btn-dl primary" onclick="downloadImagesAsZip(allImages,'+"'"+currentTs+"','"+pn+"'"+')">📦 打包('+allImages.length+')</button>';
-    }
-  }
-
-  // 音频
-  if (d.audio) {
-    html += '<button class="btn-dl warning" onclick="openAudioModal(\''+d.audio+'\',\''+currentTs+'\',\''+pn+'\')">🎵 音频</button>';
-  }
-
-  // 详情
-  html += '<button class="btn-dl success" onclick="openDetail(currentData)">📋 详情</button>';
-  html += '</div>';
-
-  html += '</div>'; // media-card end
-
-  result.innerHTML = html;
-  showResult();
-}
-
-function escapeHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ========================================
-// 详情模态框
-// ========================================
-let currentData = null;
-
-function openDetail(d) {
-  currentData = d;
-  let platform = d.platform||'';
-  let baseUrl = window.location.origin;
-  let pw = u => { if (!u) return ''; if (u.startsWith('/admin')) return u; return '/admin/video?url='+encodeURIComponent(u)+'&filename=media.mp4'; };
-  let pwAudio = u => { if (!u) return ''; if (u.startsWith('/admin')) return u; return '/admin/music?url='+encodeURIComponent(u)+'&filename=audio.mp3'; };
-  let fu = u => u ? baseUrl+u : '';
-
-  let html = '<table class="detail-table">';
-
-  // 基本信息
-  html += '<tr><td>平台</td><td>'+escapeHtml(platform)+'</td></tr>';
-  if (d.title) html += '<tr><td>标题</td><td>'+escapeHtml(d.title)+'</td></tr>';
-  if (d.author) html += '<tr><td>作者</td><td>'+escapeHtml(d.author)+'</td></tr>';
-  if (d.authorId) html += '<tr><td>ID</td><td>'+escapeHtml(d.authorId)+'</td></tr>';
-
-  // 视频
-  let videos = d.videos||[];
-  if (videos.length > 0) {
-    html += '<tr><td colspan="2" class="detail-section-title">🎬 视频 ('+videos.length+')</td></tr>';
-    for (let i=0;i<videos.length;i++) {
-      let link = fu(pw(videos[i].url));
-      html += '<tr><td>#'+(i+1)+' '+(videos[i].quality||'')+'</td><td><a class="detail-url" href="'+link+'" target="_blank">'+link+'</a></td></tr>';
-    }
-  }
-
-  // 图片
-  let imgs = d.images||[];
-  if (imgs.length > 0) {
-    html += '<tr><td colspan="2" class="detail-section-title">🖼️ 图片 ('+imgs.length+')</td></tr>';
-    for (let i=0;i<imgs.length;i++) {
-      let link = fu(pw(imgs[i].url||imgs[i]));
-      html += '<tr><td>#'+(i+1)+'</td><td><a class="detail-url" href="'+link+'" target="_blank">'+link+'</a></td></tr>';
-    }
-  }
-
-  // 动图
-  let gs = d.gifs||[];
-  if (gs.length > 0) {
-    html += '<tr><td colspan="2" class="detail-section-title">🎞️ 动图 ('+gs.length+')</td></tr>';
-    for (let i=0;i<gs.length;i++) {
-      let link = fu(pw(gs[i].url));
-      html += '<tr><td>#'+(i+1)+'</td><td><a class="detail-url" href="'+link+'" target="_blank">'+link+'</a></td></tr>';
-    }
-  }
+  let h = '<div class="card">';
 
   // 封面
-  if (d.cover) {
-    let link = fu(pw(d.cover));
-    html += '<tr><td colspan="2" class="detail-section-title">📷 封面</td></tr>';
-    html += '<tr><td></td><td><a class="detail-url" href="'+link+'" target="_blank">'+link+'</a></td></tr>';
+  h += '<div class="cover">';
+  if (d.cover) h += '<img src="/api/proxy/image?url='+encodeURIComponent(d.cover)+'" alt="" loading="lazy" referrerpolicy="no-referrer">';
+  else if (allIm.length) h += '<img src="/api/proxy/image?url='+encodeURIComponent(allIm[0])+'" alt="" loading="lazy" referrerpolicy="no-referrer">';
+  else if (d.audio) h += '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:48px;color:var(--text3);background:var(--surface2);">🎵<span style="font-size:13px;margin-top:6px;color:var(--text3);">音频</span></div>';
+  else h += '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;color:var(--text3);background:var(--surface2);">'+pi+'</div>';
+  h += '<div class="gradient"></div>';
+  h += '<div class="badges">';
+  h += '<span class="badge" style="background:'+pc+'44">'+pi+' '+esc(pf)+'</span>';
+  h += '<span class="badge">'+tic+' '+tlb+'</span></div>';
+  h += '<div class="title-overlay"><h2>'+(d.title||esc(pf)+' '+tlb)+'</h2></div></div>';
+
+  // 作者
+  if (d.author||d.avatar||d.authorId) {
+    h += '<div class="author">';
+    if (d.avatar) h += '<img src="'+esc(d.avatar)+'" alt="" loading="lazy">';
+    else h += '<div class="ph" style="background:'+pc+'22;color:'+pc+'">'+pi+'</div>';
+    h += '<div class="info"><div class="name">'+(d.author||'未知')+'</div>';
+    if (d.authorId) h += '<div class="id">@'+esc(d.authorId)+'</div>';
+    if (d.proxyFrom) h += '<div class="tag">🔗 '+esc(d.proxyFrom)+'</div>';
+    h += '</div></div>';
   }
 
-  // 音频
-  if (d.audio) {
-    html += '<tr><td colspan="2" class="detail-section-title">🎵 音频</td></tr>';
-    html += '<tr><td></td><td><a class="detail-url" href="'+fu(pwAudio(d.audio))+'" target="_blank">'+fu(pwAudio(d.audio))+'</a></td></tr>';
+  // 统计
+  const vc=vs.length, ic=im.length, gc=gs.length, dc=dls.length, ac=d.audio?1:0;
+  if (vc||gc||ic||dc||ac) {
+    h += '<div class="stats">';
+    if (vc) h += '<div class="stat"><div class="num">'+vc+'</div><div class="lbl">🎬 视频</div></div>';
+    if (gc) h += '<div class="stat"><div class="num">'+gc+'</div><div class="lbl">🎞️ 动图</div></div>';
+    if (ic) h += '<div class="stat"><div class="num">'+ic+'</div><div class="lbl">🖼️ 图片</div></div>';
+    if (dc) h += '<div class="stat"><div class="num">'+dc+'</div><div class="lbl">⬇️ 下载</div></div>';
+    if (ac) h += '<div class="stat"><div class="num">1</div><div class="lbl">🎵 音频</div></div>';
+    h += '</div>';
   }
 
-  html += '</table>';
-  id('detailBody').innerHTML = html;
+  // 下载
+  if (dls.length) {
+    h += '<div class="dl-box"><div class="dl-title">⬇ 下载</div><div class="dl-grid">';
+    let vn=0,gn=0,imn=0;
+    const tv=dls.filter(x=>x.label==='下载视频').length;
+    const tg=dls.filter(x=>x.label==='下载动图').length;
+    const ti_=dls.filter(x=>x.label==='下载图片').length;
+    for (const item of dls) {
+      if (item.label==='下载视频') {
+        vn++; const fn=curTs+'_'+pn+'_video'+(tv>1?vn:'')+'.mp4';
+        h += '<a class="btn-dl primary" href="/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn)+'">🎬 视频'+(tv>1?' '+vn:'')+' <span style="opacity:.6;font-weight:400;">'+(item.quality||'')+'</span></a>';
+      } else if (item.label==='下载动图') {
+        gn++; const e=ext(item.url); const fn=curTs+'_'+pn+'_gif'+(tg>1?gn:'')+'.'+e;
+        h += '<a class="btn-dl green" href="/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn)+'">🎞️ 动图'+(tg>1?' '+gn:'')+'</a>';
+      } else if (item.label==='下载图片') {
+        imn++; const e=ext(item.url); const fn=curTs+'_'+pn+'_image'+(ti_>1?imn:'')+'.'+e;
+        h += '<a class="btn-dl blue" href="/admin/video?url='+encodeURIComponent(item.url)+'&filename='+encodeURIComponent(fn)+'">🖼️ 图片'+(ti_>1?' '+imn:'')+'</a>';
+      }
+    }
+    h += '</div></div>';
+  }
+
+  // 缩略图
+  if (allIm.length) {
+    h += '<div class="thumbs"><div class="hd"><span class="lbl">🖼 图片 '+allIm.length+' 张</span><button onclick="openPreview()">查看全部 →</button></div><div class="thumb-grid">';
+    const max = Math.min(allIm.length, 6);
+    for (let i=0;i<max;i++) h += '<div class="thumb-item" onclick="openPreview()"><img src="'+esc(allIm[i])+'" alt="" loading="lazy"></div>';
+    if (allIm.length>6) h += '<div class="thumb-more" onclick="openPreview()">+'+(allIm.length-6)+'</div>';
+    h += '</div></div>';
+  }
+
+  // 工具栏
+  h += '<div class="actions">';
+  if ((vs.length&&vs[0].url)||allIm.length) h += '<button class="btn-dl amber" onclick="openPreview()">👁️ 预览</button>';
+  if (allIm.length>1) {
+    h += '<button class="btn-dl blue" onclick="batchDl(allIm,\''+curTs+'\',\''+pn+'\')">📥 批量</button>';
+    h += '<button class="btn-dl primary" onclick="zipDl(allIm,\''+curTs+'\',\''+pn+'\')">📦 打包</button>';
+  } else if (allIm.length===1) {
+    h += '<button class="btn-dl blue" onclick="dlSingleImg(0)">📥 下载图片</button>';
+  }
+  if (d.audio) h += '<button class="btn-dl amber" onclick="openAudio(\''+d.audio+'\',\''+curTs+'\',\''+pn+'\')">🎵 音频</button>';
+  h += '<button class="btn-dl outline" onclick="openDetail(curData)">📋 详情</button>';
+  h += '</div></div>';
+
+  result.innerHTML = h;
+  showResult();
+  setTimeout(() => result.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+}
+
+// ============================================
+// 详情
+// ============================================
+function openDetail(d) {
+  if (!d) return;
+  curData = d;
+  const pw = u => { if (!u||u.startsWith('/admin')) return u||''; return '/admin/video?url='+encodeURIComponent(u)+'&filename=media.mp4'; };
+  const pa = u => { if (!u||u.startsWith('/admin')) return u||''; return '/admin/music?url='+encodeURIComponent(u)+'&filename=audio.mp3'; };
+  const fu = u => u ? window.location.origin+u : '';
+
+  let h = '<table class="detail-table">';
+  h += '<tr><td>平台</td><td>'+esc(d.platform||'')+'</td></tr>';
+  if (d.title) h += '<tr><td>标题</td><td>'+esc(d.title)+'</td></tr>';
+  if (d.author) h += '<tr><td>作者</td><td>'+esc(d.author)+'</td></tr>';
+  if (d.authorId) h += '<tr><td>ID</td><td>'+esc(d.authorId)+'</td></tr>';
+  if (d.type) h += '<tr><td>类型</td><td>'+esc(d.type)+'</td></tr>';
+
+  const vs = d.videos||[];
+  if (vs.length) {
+    h += '<tr><td colspan="2" class="detail-sec">🎬 视频 '+vs.length+'</td></tr>';
+    vs.forEach((v,i) => { h += '<tr><td>#'+(i+1)+' '+(v.quality||'')+'</td><td><a class="detail-url" href="'+fu(pw(v.url))+'" target="_blank">'+fu(pw(v.url))+'</a></td></tr>'; });
+  }
+  const im = d.images||[];
+  if (im.length) {
+    h += '<tr><td colspan="2" class="detail-sec">🖼️ 图片 '+im.length+'</td></tr>';
+    im.forEach((img,i) => { const l=fu(pw(img.url||img)); h += '<tr><td>#'+(i+1)+'</td><td><a class="detail-url" href="'+l+'" target="_blank">'+l+'</a></td></tr>'; });
+  }
+  const gs = d.gifs||[];
+  if (gs.length) {
+    h += '<tr><td colspan="2" class="detail-sec">🎞️ 动图 '+gs.length+'</td></tr>';
+    gs.forEach((g,i) => { const l=fu(pw(g.url)); h += '<tr><td>#'+(i+1)+'</td><td><a class="detail-url" href="'+l+'" target="_blank">'+l+'</a></td></tr>'; });
+  }
+  if (d.cover) { h += '<tr><td colspan="2" class="detail-sec">📷 封面</td></tr>'; h += '<tr><td></td><td><a class="detail-url" href="'+fu(pw(d.cover))+'" target="_blank">'+fu(pw(d.cover))+'</a></td></tr>'; }
+  if (d.audio) { h += '<tr><td colspan="2" class="detail-sec">🎵 音频</td></tr>'; h += '<tr><td></td><td><a class="detail-url" href="'+fu(pa(d.audio))+'" target="_blank">'+fu(pa(d.audio))+'</a></td></tr>'; }
+  h += '</table>';
+  id('detailBody').innerHTML = h;
   id('detailModal').classList.add('active');
 }
+function closeDetail() { id('detailModal').classList.remove('active'); }
 
-function closeDetail() {
-  id('detailModal').classList.remove('active');
-}
-
-// ========================================
-// 预览模态框
-// ========================================
+// ============================================
+// 预览
+// ============================================
 function openPreview() {
-  let d = currentData;
-  if (!d) return;
-  let videos = d.videos||[];
-  let imgs = d.images||[];
-  let gifs = d.gifs||[];
-  let allImages = [...new Set([...gifs.map(g=>g.url), ...imgs.map(i=>i.url)])];
-  let videoUrl = videos.length>0 ? videos[0].url : '';
+  const d = curData; if (!d) return;
+  const vs = d.videos||[], im = d.images||[], gs = d.gifs||[];
+  const all = [...new Set([...gs.map(g=>g.url), ...im.map(i=>i.url)])];
+  const vu = vs.length ? vs[0].url : '';
+  curVidUrl = vu; curImgs = all; selImgs = [];
 
-  currentVideoUrl = videoUrl;
-  currentImages = allImages;
-  selectedImages = [];
-
-  let videoLoading = id('videoLoading');
-  let previewVideo = id('previewVideo');
-  let tabs = id('previewTabs');
-
-  // 视频
-  if (currentVideoUrl) {
+  const vl = id('vLoading'), pv = id('previewVideo'), tabs = id('previewTabs');
+  if (curVidUrl) {
     tabs.children[0].style.display='block';
-    videoLoading.classList.remove('hidden');
-    previewVideo.src = '/admin/stream?url='+encodeURIComponent(currentVideoUrl);
-    previewVideo.load();
-    switchPreviewTab('video');
-  } else {
-    tabs.children[0].style.display='none';
-    switchPreviewTab('image');
-  }
+    vl.classList.remove('hidden');
+    pv.src = '/admin/stream?url='+encodeURIComponent(curVidUrl);
+    pv.load();
+    switchTab('video');
+  } else { tabs.children[0].style.display='none'; switchTab('image'); }
 
-  // 图片
-  let grid = id('imageGrid');
-  grid.innerHTML = '';
-  if (currentImages.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text3);padding:20px;text-align:center;">暂无图片</p>';
+  const g = id('imgGrid'); g.innerHTML = '';
+  if (!curImgs.length) {
+    g.innerHTML = '<p style="color:var(--text3);padding:16px;text-align:center;">暂无图片</p>';
     tabs.children[1].style.display='none';
   } else {
     tabs.children[1].style.display='block';
-    for (let i=0;i<currentImages.length;i++) {
-      let item = document.createElement('div');
-      item.className='image-item';
-      item.dataset.index=i;
-      item.innerHTML = '<img src="'+escapeHtml(currentImages[i])+'" alt="'+(i+1)+'" loading="lazy"><div class="check">✓</div><div class="dl-overlay" onclick="event.stopPropagation();downloadSingleImage('+i+')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
-      item.onclick = function() { toggleImageSelection(parseInt(this.dataset.index)); };
-      grid.appendChild(item);
-    }
+    curImgs.forEach((u,i) => {
+      const el = document.createElement('div');
+      el.className='img-item'; el.dataset.index=i;
+      el.innerHTML = '<img src="'+esc(u)+'" alt="" loading="lazy"><div class="ck">✓</div><div class="dl-overlay" onclick="event.stopPropagation();dlSingleImg('+i+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
+      el.onclick = function() { toggleSel(parseInt(this.dataset.index)); };
+      g.appendChild(el);
+    });
   }
-  id('imageCounter').textContent = '已选 0 张';
+  id('imgCt').textContent = '已选 0 张';
   id('previewModal').classList.add('active');
 }
-
 function closePreview() {
   id('previewModal').classList.remove('active');
-  let v = id('previewVideo');
-  v.pause(); v.removeAttribute('src');
-  currentVideoUrl=''; currentImages=[]; selectedImages=[];
+  const v=id('previewVideo'); v.pause(); v.removeAttribute('src');
+  curVidUrl=''; curImgs=[]; selImgs=[];
 }
-
-function switchPreviewTab(tab) {
-  document.querySelectorAll('.preview-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  document.querySelectorAll('.preview-panel').forEach(p=>p.classList.toggle('active',p.id.replace('Panel','').toLowerCase()===tab));
+function switchTab(t) {
+  $$('.preview-tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));
+  $$('.preview-panel').forEach(el=>el.classList.toggle('active',el.id.replace('Panel','').toLowerCase()===t));
 }
-
-function toggleImageSelection(idx) {
-  let items = id('imageGrid').children;
-  if (idx<0||idx>=items.length) return;
-  let item = items[idx];
-  let pos = selectedImages.indexOf(idx);
-  if (pos>-1) { selectedImages.splice(pos,1); item.classList.remove('selected'); }
-  else { selectedImages.push(idx); item.classList.add('selected'); }
-  id('imageCounter').textContent = '已选 '+selectedImages.length+' 张';
+function toggleSel(i) {
+  const items = id('imgGrid').children;
+  if (i<0||i>=items.length) return;
+  const item=items[i]; const p=selImgs.indexOf(i);
+  if (p>-1) { selImgs.splice(p,1); item.classList.remove('selected'); }
+  else { selImgs.push(i); item.classList.add('selected'); }
+  id('imgCt').textContent = '已选 '+selImgs.length+' 张';
 }
-
-function selectAllImages() {
-  let items = id('imageGrid').children;
-  selectedImages=[];
-  for (let i=0;i<items.length;i++) { selectedImages.push(i); items[i].classList.add('selected'); }
-  id('imageCounter').textContent = '已选 '+selectedImages.length+' 张';
+function selAll() {
+  const items=id('imgGrid').children; selImgs=[];
+  for(let i=0;i<items.length;i++){selImgs.push(i);items[i].classList.add('selected');}
+  id('imgCt').textContent='已选 '+selImgs.length+' 张';
 }
-function deselectAllImages() {
-  selectedImages=[];
-  [...id('imageGrid').children].forEach(c=>c.classList.remove('selected'));
-  id('imageCounter').textContent = '已选 0 张';
+function deselAll() {
+  selImgs=[]; [...id('imgGrid').children].forEach(c=>c.classList.remove('selected'));
+  id('imgCt').textContent='已选 0 张';
 }
-
-async function downloadSingleImage(idx) {
-  if (idx<0||idx>=currentImages.length) return;
-  let url = currentImages[idx];
-  let fn = currentTs+'_'+currentPn+'_image'+(idx+1)+'.'+getExt(url);
+async function dlSingleImg(i) {
+  if (i<0||i>=curImgs.length) return;
+  const fn=curTs+'_'+curPn+'_image'+(i+1)+'.'+ext(curImgs[i]);
   try {
-    let r = await fetch('/admin/video?url='+encodeURIComponent(url)+'&filename='+encodeURIComponent(fn));
-    if (r.ok) { let b=await r.blob(); triggerDl(b,fn); showToast('下载成功'); }
-    else showToast('下载失败');
-  } catch(e) { showToast('失败: '+e.message); }
+    const r=await fetch('/admin/video?url='+encodeURIComponent(curImgs[i])+'&filename='+encodeURIComponent(fn));
+    if (r.ok) { const b=await r.blob(); triggerDl(b,fn); msg('下载成功'); }
+    else msg('下载失败');
+  } catch(e) { msg('失败: '+e.message); }
 }
-
-async function downloadSelectedFromPreview() {
-  let active = document.querySelector('.preview-tab.active');
-  if (!active) return;
-  if (active.dataset.tab==='video') {
-    if (!currentVideoUrl) { showToast('暂无视频'); return; }
-    let fn = currentTs+'_'+currentPn+'_video.mp4';
+async function dlSelectedPreview() {
+  const a = document.querySelector('.preview-tab.active');
+  if (!a) return;
+  if (a.dataset.tab==='video') {
+    if (!curVidUrl) { msg('暂无视频'); return; }
+    const fn=curTs+'_'+curPn+'_video.mp4';
     try {
-      let r = await fetch('/admin/video?url='+encodeURIComponent(currentVideoUrl)+'&filename='+encodeURIComponent(fn));
-      if (r.ok) { let b=await r.blob(); triggerDl(b,fn); showToast('视频下载成功'); }
-      else showToast('下载失败');
-    } catch(e) { showToast('失败: '+e.message); }
+      const r=await fetch('/admin/video?url='+encodeURIComponent(curVidUrl)+'&filename='+encodeURIComponent(fn));
+      if (r.ok) { const b=await r.blob(); triggerDl(b,fn); msg('下载成功'); }
+      else msg('下载失败');
+    } catch(e) { msg('失败: '+e.message); }
   } else {
-    if (!selectedImages.length) { showToast('请选择图片'); return; }
-    let urls = selectedImages.sort().map(i=>currentImages[i]);
-    await batchDownloadImages(urls, currentTs, currentPn);
+    if (!selImgs.length) { msg('请选择图片'); return; }
+    if (selImgs.length===1) { await dlSingleImg(selImgs[0]); return; }
+    const urls = selImgs.sort().map(i=>curImgs[i]);
+    await batchDl(urls, curTs, curPn);
   }
 }
 
-// ========================================
+// ============================================
 // 音频
-// ========================================
-function openAudioModal(audioUrl, ts, pn) {
-  if (!audioUrl) { showToast('暂无音频'); return; }
-  currentAudioUrl = audioUrl.startsWith('/admin/music') ? audioUrl : '/admin/music?url='+encodeURIComponent(audioUrl)+'&filename='+encodeURIComponent(ts+'_'+pn+'_audio.mp3');
-  currentAudioFilename = ts+'_'+pn+'_audio.mp3';
-  id('audioFilename').textContent = currentAudioFilename;
-  id('audioFileSize').textContent = '获取中...';
-  id('audioDownloadBtn').disabled = false;
-  id('audioDownloadBtn').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载音频';
+// ============================================
+function openAudio(audioUrl, ts, pn) {
+  if (!audioUrl) { msg('暂无音频'); return; }
+  curAudioUrl = audioUrl.startsWith('/admin/music') ? audioUrl : '/admin/music?url='+encodeURIComponent(audioUrl)+'&filename='+encodeURIComponent(ts+'_'+pn+'_audio.mp3');
+  curAudioFn = ts+'_'+pn+'_audio.mp3';
+  id('audioFn').textContent = curAudioFn;
+  id('audioSz').textContent = '获取中...';
+  id('audioBtn').disabled = false;
+  id('audioBtn').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载';
   id('audioModal').classList.add('active');
-  fetchFileSize(currentAudioUrl);
+  fetchSize(curAudioUrl);
 }
-function closeAudioModal() { id('audioModal').classList.remove('active'); currentAudioUrl=''; }
-
-async function fetchFileSize(url) {
+function closeAudio() { id('audioModal').classList.remove('active'); curAudioUrl=''; }
+async function fetchSize(url) {
   try {
-    let r = await fetch(url, {method:'HEAD'});
-    let cl = r.headers.get('content-length');
-    if (cl) { let s=parseInt(cl); id('audioFileSize').textContent = s>1048576 ? '大小: '+(s/1048576).toFixed(1)+' MB' : '大小: '+(s/1024).toFixed(0)+' KB'; }
-    else id('audioFileSize').textContent = '大小未知';
-  } catch(e) { id('audioFileSize').textContent = '大小未知'; }
+    const r=await fetch(url,{method:'HEAD'});
+    const cl=r.headers.get('content-length');
+    if(cl) { const s=parseInt(cl); id('audioSz').textContent = s>1048576?'大小: '+(s/1048576).toFixed(1)+' MB':'大小: '+(s/1024).toFixed(0)+' KB'; }
+    else id('audioSz').textContent='大小未知';
+  } catch(e) { id('audioSz').textContent='大小未知'; }
 }
-
-async function doAudioDownload() {
-  if (!currentAudioUrl) return;
-  let btn = id('audioDownloadBtn');
-  let orig = btn.innerHTML;
-  btn.innerHTML = '<div class="spinner spinner-sm"></div> 下载中...';
-  btn.disabled = true;
+async function doAudio() {
+  if (!curAudioUrl) return;
+  const btn=id('audioBtn'); const orig=btn.innerHTML;
+  btn.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;"></div> 下载中...';
+  btn.disabled=true;
   try {
-    let r = await fetch(currentAudioUrl);
-    if (r.ok) { let b=await r.blob(); triggerDl(b, currentAudioFilename); showToast('下载成功'); closeAudioModal(); }
-    else showToast('下载失败');
-  } catch(e) { showToast('失败: '+e.message); }
-  btn.innerHTML = orig; btn.disabled = false;
+    const r=await fetch(curAudioUrl);
+    if(r.ok){const b=await r.blob();triggerDl(b,curAudioFn);msg('下载成功');closeAudio();}
+    else msg('下载失败');
+  } catch(e) { msg('失败: '+e.message); }
+  btn.innerHTML=orig; btn.disabled=false;
 }
 
-// ========================================
-// 下载工具
-// ========================================
-function triggerDl(blob, name) {
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a');
-  a.href=url; a.download=name; document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+// ============================================
+// 下载
+// ============================================
+function triggerDl(blob,name) {
+  const u=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=u; a.download=name; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(u),1000);
 }
 
-// 进度
-function showProgress(title, sub) {
-  batchCancelFlag=false;
-  id('progressTitle').textContent=title||'下载中...';
-  id('progressSub').textContent=sub||'';
-  id('progressFill').style.width='0%';
-  id('progressStats').textContent='准备中...';
+function showProg(title,sub) {
+  cancelFlag=false;
+  id('pTitle').textContent=title||'下载中...';
+  id('pSub').textContent=sub||'';
+  id('pFill').style.width='0%';
+  id('pStats').textContent='准备中...';
   id('progressOverlay').classList.add('active');
 }
-function updateProgress(pct, stats) {
-  id('progressFill').style.width=Math.min(100,Math.max(0,pct))+'%';
-  id('progressStats').textContent=stats||'';
+function updProg(pct,stats) {
+  id('pFill').style.width=Math.min(100,Math.max(0,pct))+'%';
+  id('pStats').textContent=stats||'';
 }
-function hideProgress() { id('progressOverlay').classList.remove('active'); batchCancelFlag=false; }
-function cancelBatchDownload() { batchCancelFlag=true; hideProgress(); showToast('已取消'); }
+function hideProg() { id('progressOverlay').classList.remove('active'); cancelFlag=false; }
+function cancelBatch() { cancelFlag=true; hideProg(); msg('已取消'); }
 
-async function downloadSingleWithRetry(imgUrl, fn, retries) {
-  retries=retries||3;
-  let lastErr=null;
-  for (let a=1;a<=retries;a++) {
-    if (batchCancelFlag) throw new Error('CANCELLED');
+async function dlWithRetry(url,fn,retries) {
+  retries=retries||3; let last=null;
+  for(let a=1;a<=retries;a++) {
+    if(cancelFlag) throw new Error('CANCELLED');
     try {
-      let r = await fetch('/admin/video?url='+encodeURIComponent(imgUrl)+'&filename='+encodeURIComponent(fn));
-      if (r.ok) return await r.blob();
-      if ([404,403,410].includes(r.status)) throw new Error('HTTP '+r.status);
-      lastErr = new Error('HTTP '+r.status);
-    } catch(e) { if(e.message==='CANCELLED') throw e; lastErr=e; }
-    if (a<retries) await new Promise(r=>setTimeout(r,1000*a));
+      const r=await fetch('/admin/video?url='+encodeURIComponent(url)+'&filename='+encodeURIComponent(fn));
+      if(r.ok) return await r.blob();
+      if([404,403,410].includes(r.status)) throw new Error('HTTP '+r.status);
+      last=new Error('HTTP '+r.status);
+    } catch(e) { if(e.message==='CANCELLED') throw e; last=e; }
+    if(a<retries) await new Promise(r=>setTimeout(r,1000*a));
   }
-  throw lastErr||new Error('失败');
+  throw last||new Error('失败');
 }
 
-async function downloadImagesAsZip(images, ts, pn) {
-  let total=images.length;
-  showProgress('打包下载','共 '+total+' 张');
-  let blobs=new Array(total);
-  let completed=0;
-  let concurrency=isMobile()?8:20;
-  let idx=0;
-  async function worker() {
-    while (idx<total && !batchCancelFlag) {
-      let i=idx++;
-      try {
-        let r=await fetch('/admin/video?url='+encodeURIComponent(images[i]));
-        if (r.ok) blobs[i]=await r.blob();
-      } catch(e) { blobs[i]=null; }
-      completed++;
-      updateProgress(Math.round(completed/total*100), '下载中 '+completed+'/'+total);
+async function zipDl(imgs,ts,pn) {
+  const total=imgs.length; showProg('打包下载','共 '+total+' 张');
+  const blobs=new Array(total); let done=0; const con=mob()?8:20; let idx=0;
+  async function w() {
+    while(idx<total&&!cancelFlag) {
+      const i=idx++; try{const r=await fetch('/admin/video?url='+encodeURIComponent(imgs[i]));if(r.ok)blobs[i]=await r.blob();}catch(e){blobs[i]=null;}
+      done++; updProg(Math.round(done/total*100),'下载中 '+done+'/'+total);
     }
   }
-  let workers=[];
-  for (let w=0;w<concurrency;w++) workers.push(worker());
-  await Promise.all(workers);
-  if (batchCancelFlag) { hideProgress(); return; }
-
-  let ok = blobs.filter(Boolean).length;
-  if (!ok) { hideProgress(); showToast('全部下载失败'); return; }
-  updateProgress(100,'生成压缩包...');
-
-  let zip = new JSZip();
-  for (let i=0;i<total;i++) {
-    if (blobs[i]) zip.file(ts+'_'+pn+'_image'+(i+1)+'.'+getExt(images[i]), blobs[i], {compression:'STORE'});
-  }
+  const ws=[]; for(let i=0;i<con;i++) ws.push(w()); await Promise.all(ws);
+  if(cancelFlag){hideProg();return;}
+  const ok=blobs.filter(Boolean).length;
+  if(!ok){hideProg();msg('全部下载失败');return;}
+  updProg(100,'生成压缩包...');
+  const zip=new JSZip();
+  for(let i=0;i<total;i++) if(blobs[i]) zip.file(ts+'_'+pn+'_image'+(i+1)+'.'+ext(imgs[i]),blobs[i],{compression:'STORE'});
   try {
-    let zb = await zip.generateAsync({type:'blob',compression:'STORE'});
-    saveAs(zb, ts+'_'+pn+'_images.zip');
-    hideProgress();
-    showToast('打包完成！成功 '+ok+' 张'+(total-ok?'，失败 '+(total-ok)+' 张':''));
-  } catch(e) { hideProgress(); showToast('打包失败: '+e.message); }
+    const zb=await zip.generateAsync({type:'blob',compression:'STORE'});
+    saveAs(zb,ts+'_'+pn+'_images.zip'); hideProg();
+    msg('打包完成！成功 '+ok+' 张'+(total-ok?'，失败 '+(total-ok)+' 张':''));
+  } catch(e) { hideProg(); msg('打包失败: '+e.message); }
 }
 
-async function batchDownloadImages(images, ts, pn) {
-  if (!images||!images.length) return;
-  let total=images.length;
-  if (total>=3 && isMobile()) { return await downloadImagesAsZip(images,ts,pn); }
-  let concurrency=5, dlDelay=200;
-  let completed=0, success=0, fail=0;
-  let blobs=[];
-  showProgress('下载图片','共 '+total+' 张');
-  let idx=0;
-  async function worker() {
-    while (idx<total && !batchCancelFlag) {
-      let i=idx++;
-      let fn = ts+'_'+pn+'_image'+(i+1)+'.'+getExt(images[i]);
-      try {
-        let b=await downloadSingleWithRetry(images[i], fn);
-        blobs.push({blob:b,fn,idx:i}); success++;
-      } catch(e) { if(e.message==='CANCELLED') return; fail++; }
-      completed++;
-      updateProgress(Math.round(completed/total*100), '成功 '+success+' / 失败 '+fail+' / 剩余 '+(total-completed));
+async function batchDl(imgs,ts,pn) {
+  if(!imgs||!imgs.length) return;
+  const total=imgs.length;
+  if(total>=10&&mob()) return await zipDl(imgs,ts,pn);
+  let done=0,ok=0,fail=0; const blobs=[]; let idx=0;
+  showProg('下载图片','共 '+total+' 张');
+  async function w() {
+    while(idx<total&&!cancelFlag) {
+      const i=idx++; const fn=ts+'_'+pn+'_image'+(i+1)+'.'+ext(imgs[i]);
+      try{const b=await dlWithRetry(imgs[i],fn);blobs.push({blob:b,fn});ok++;}
+      catch(e){if(e.message==='CANCELLED')return;fail++;}
+      done++; updProg(Math.round(done/total*100),'成功 '+ok+' / 失败 '+fail+' / 剩余 '+(total-done));
     }
   }
-  let workers=[];
-  for (let w=0;w<concurrency;w++) workers.push(worker());
-  await Promise.all(workers);
-  if (batchCancelFlag) { hideProgress(); return; }
-  if (!blobs.length) { hideProgress(); showToast('全部下载失败'); return; }
-  updateProgress(100,'触发下载...');
-  for (let b of blobs) {
-    if (batchCancelFlag) break;
-    triggerDl(b.blob, b.fn);
-    await new Promise(r=>setTimeout(r,dlDelay));
+  const ws=[]; for(let i=0;i<5;i++) ws.push(w()); await Promise.all(ws);
+  if(cancelFlag){hideProg();return;}
+  if(!blobs.length){hideProg();msg('全部下载失败');return;}
+  updProg(100,'触发下载...');
+  for(const b of blobs) {
+    if(cancelFlag) break;
+    triggerDl(b.blob,b.fn); await new Promise(r=>setTimeout(r,200));
   }
-  hideProgress();
-  showToast('完成: 成功 '+success+' 张'+(fail?'，失败 '+fail:''));
+  hideProg(); msg('完成: 成功 '+ok+' 张'+(fail?'，失败 '+fail:''));
 }
 
-// ========================================
-// UI 控制
-// ========================================
+// ============================================
+// UI
+// ============================================
 function showLoading() { loading.classList.add('active'); }
 function hideLoading() { loading.classList.remove('active'); }
-function showError(m) { error.textContent=m; error.classList.add('active'); }
-function hideError() { error.classList.remove('active'); }
+function showError(m) { errorDetail.textContent=m; error.classList.add('active'); }
+function hideError() { error.classList.remove('active'); errorDetail.textContent=''; }
 function showResult() { result.classList.add('active'); }
-function hideResult() { result.classList.remove('active'); }
+function hideResult() { result.classList.remove('active'); result.innerHTML=''; }
 
-// ========================================
-// 登出（POST 方式防 CSRF）
-// ========================================
 function logout() {
-  fetch('/api/logout', { method: 'POST' }).then(function(){ window.location.href='/'; }).catch(function(){ window.location.href='/'; });
+  fetch('/api/logout',{method:'POST'}).then(()=>{window.location.href='/'}).catch(()=>{window.location.href='/'});
 }
 
-// ========================================
-// 黑夜模式
-// ========================================
-function toggleDarkMode() {
-  let b = document.body;
-  b.classList.toggle('dark');
-  id('darkModeBtn').textContent = b.classList.contains('dark') ? '☀️ 白天' : '🌙 黑夜';
-  localStorage.setItem('darkMode', b.classList.contains('dark') ? 'true' : 'false');
+// ============================================
+// 深色模式
+// ============================================
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  id('darkBtn').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  localStorage.setItem('darkMode', document.body.classList.contains('dark') ? 'true' : 'false');
 }
-(function initDark() {
+(function(){
   if (localStorage.getItem('darkMode')==='true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme:dark)').matches)) {
-    document.body.classList.add('dark');
-    id('darkModeBtn').textContent = '☀️ 白天';
+    document.body.classList.add('dark'); id('darkBtn').textContent='☀️';
   }
 })();
 
-// ========================================
-// 视频加载优化
-// ========================================
-let previewVideo = id('previewVideo');
-previewVideo.addEventListener('loadedmetadata', ()=>{ id('videoLoading').classList.add('hidden'); });
-previewVideo.addEventListener('canplaythrough', ()=>{ id('videoLoading').classList.add('hidden'); });
-previewVideo.addEventListener('waiting', ()=>{ id('videoLoading').classList.remove('hidden'); });
-previewVideo.addEventListener('playing', ()=>{ id('videoLoading').classList.add('hidden'); });
-previewVideo.addEventListener('error', ()=>{ id('videoLoading').classList.add('hidden'); });
+// 视频事件
+const pv = id('previewVideo');
+pv.addEventListener('loadedmetadata',()=>id('vLoading').classList.add('hidden'));
+pv.addEventListener('canplaythrough',()=>id('vLoading').classList.add('hidden'));
+pv.addEventListener('waiting',()=>id('vLoading').classList.remove('hidden'));
+pv.addEventListener('playing',()=>id('vLoading').classList.add('hidden'));
+pv.addEventListener('error',()=>id('vLoading').classList.add('hidden'));
+
+// 点击外部关闭模态框
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', function(e) { if (e.target===this) this.classList.remove('active'); });
+});
 </script>
 </body>
 </html>

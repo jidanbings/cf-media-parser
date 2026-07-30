@@ -26,6 +26,10 @@ export function json(data, status = 200, extraHeaders = {}) {
  * @returns {Response}
  */
 export function addSecurityHeaders(response) {
+  // 重定向响应：直接返回，不重构 body 流避免丢失 Location 头
+  if (response.status >= 301 && response.status <= 308) {
+    return response;
+  }
   const newHeaders = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     newHeaders.set(key, value);

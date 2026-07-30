@@ -19,6 +19,23 @@ export default {
   async fetch(request, env, ctx) {
     // 定期清理过期缓存
     cleanupRateMap(Date.now());
-    return handleRequest(request, env, ctx);
+    try {
+      return await handleRequest(request, env, ctx);
+    } catch (err) {
+      // 全局错误兜底 — 避免裸奔 500
+      const body = JSON.stringify({
+        error: '内部错误: ' + err.message,
+        type: err.constructor?.name || 'Error',
+        // 生产环境可移除以下行
+        stack: err.stack?.split('\n').slice(0, 5).join('\n')
+      });
+      return new Response(body, {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
   }
 };
