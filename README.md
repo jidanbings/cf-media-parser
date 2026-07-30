@@ -4,7 +4,6 @@
 
 > ⛔ **B站（哔哩哔哩）永久放弃支持** — 由于 B站的反爬机制过于激进（Cloudflare Workers 的 TLS 指纹检测返回 412），本项目永久放弃对 B站 的支持。如果你需要解析 B站视频，请使用 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python VPS 部署版）。
 
-> ⛔ **B站（哔哩哔哩）永久放弃支持** — 由于 B站的反爬机制过于激进（Cloudflare Workers 的 TLS 指纹检测返回 412），本项目永久放弃对 B站 的支持。如果你需要解析 B站视频，请使用 [ucmao/media-parser](https://github.com/ucmao/media-parser)（Python VPS 部署版）。
 
 [![Deploy to Cloudflare](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflare)](https://dash.cloudflare.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -645,7 +644,26 @@ POST /api/logout
 
 ## 📋 更新日志
 
-### v3.2.1（2026-07-30）— 快手封面修复
+### v3.3.0（2026-07-30）— 登录流程优化 + UA 绑定
+
+**🐛 修复：**
+- **登录 500 错误** — `Response.redirect()` 在 Workers 中传相对路径抛异常，改为手动 302 构造
+- **Admin 接口 404** — 前端请求 `/api/admin/info` 与后端路由 `/admin/info` 路径不匹配，统一为 `/admin/info`
+- **重定向响应丢失** — `addSecurityHeaders` 重构 Response body 流导致 302 不被浏览器识别，重定向响应直接透传
+
+**⚡ 优化：**
+- **减少 50% 请求量** — `isAuth` 在每个页面请求中只调用 1 次（之前 2 次），登录流程从 4 次请求降至 2 次
+- **去掉冗余前端自检** — 环境变量检查由后端统一处理，删除 `index.html` 中多余的 `fetch('/admin/info')`
+- **精简 `index.html`** — 移除死代码（env-error 样式/HTML/JS），从 97 行缩至 50 行
+
+**🔐 安全：**
+- **UA 绑定** — JWT 令牌绑定登录时的浏览器 User-Agent，换浏览器需重新登录
+- **去 IP 绑定** — 不绑定 IP 地址，WiFi/移动数据切换不受影响
+- **全局错误兜底** — Worker 入口加 try-catch，避免裸 500，返回 JSON 错误详情
+
+**📝 文档：**
+- `video.html` 页脚移除「文档」链接
+- README 更新安全性说明
 
 **🐛 修复：**
 - **快手封面图片无法获取** — 嵌入数据中 `coverUrl` 字段可能为不存在或对象格式，导致封面一直为空
