@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cf-media-parser · 三平台媒体解析</title>
+<meta name="description" content="基于 Cloudflare Workers 的媒体解析工具，支持抖音、快手、哔哩哔哩三个平台的高清视频与图集解析。">
+<meta name="theme-color" content="#f4f5f9">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/assets/warmth.css">
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7z"/><path d="M12 2.5V21.5"/><path d="M3 7l9 4.5 9-4.5"/></svg>
+      </span>
+      <span class="brand-name">cf-media-parser</span>
+    </a>
+    <nav class="nav-center" aria-label="主导航">
+      <a href="/" class="is-active">首页</a>
+      <a href="/douyin">抖音</a>
+      <a href="/kuaishou">快手</a>
+      <a href="/bilibili">B站</a>
+    </nav>
+    <div class="header-actions">
+      <span class="theme-group" role="group" aria-label="主题切换">
+        <button type="button" data-action="set-theme" data-set-theme="light" aria-pressed="true" aria-label="浅色">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button type="button" data-action="set-theme" data-set-theme="system" aria-pressed="false" aria-label="跟随系统">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8"/></svg>
+        </button>
+        <button type="button" data-action="set-theme" data-set-theme="dark" aria-pressed="false" aria-label="深色">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        </button>
+      </span>
+      <a class="btn btn-text" href="https://github.com/jidanbings/cf-media-parser" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a class="btn btn-primary" href="/douyin">开始解析</a>
+      <button class="hamburger" type="button" id="navToggle" data-action="toggle-nav" aria-label="打开菜单" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="/">首页</a>
+  <a href="/douyin">抖音</a>
+  <a href="/kuaishou">快手</a>
+  <a href="/bilibili">B站</a>
+  <div class="theme-row">
+    <span>主题</span>
+    <span class="theme-group" role="group" aria-label="主题切换">
+      <button type="button" data-action="set-theme" data-set-theme="light" aria-pressed="true" aria-label="浅色">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button type="button" data-action="set-theme" data-set-theme="system" aria-pressed="false" aria-label="跟随系统">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 20h8"/></svg>
+      </button>
+      <button type="button" data-action="set-theme" data-set-theme="dark" aria-pressed="false" aria-label="深色">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+      </button>
+    </span>
+  </div>
+</div>
+
+<main>
+
+<!-- ==================== Hero ==================== -->
+<section class="section-hero">
+  <div class="container hero-grid">
+    <div class="hero-copy reveal">
+      <span class="eyebrow">Cloudflare 边缘解析</span>
+      <h1>粘贴链接，<br>取出<span class="grad">高清</span><span class="outline">原片</span>。</h1>
+      <p class="lede">三个平台，三个独立入口。自动辨识内容形态，挑出最高画质的一份，图像与视频直链一键复制。无需登录。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="/douyin">抖音解析 →</a>
+        <a class="btn btn-outline btn-lg" href="/bilibili">B站解析</a>
+      </div>
+      <div class="hero-meta">
+        <div><strong>3</strong><span>平台支持</span></div>
+        <div><strong>0</strong><span>登录依赖</span></div>
+        <div><strong>1080p</strong><span>最高画质</span></div>
+        <div><strong>5 min</strong><span>内存留存</span></div>
+      </div>
+    </div>
+    <div class="glass reveal">
+      <div class="win">
+        <div class="win-bar"><i></i><i></i><i></i><span class="win-title">parser — result.json</span></div>
+        <div class="win-body">
+          <div class="win-row"><span class="k">platform</span><span class="v">抖音</span><span style="margin-left:auto;color:var(--success)">●</span></div>
+          <div class="win-row"><span class="k">type</span><span class="v">video + images</span></div>
+          <div class="win-row"><span class="k">quality</span><span class="v">H.264 1080p</span></div>
+          <div class="win-row"><span class="k">watermark</span><span class="v">removed</span><span style="margin-left:auto;color:var(--success)">✓</span></div>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><i></i><i></i><i></i><span class="win-title">zsh — copy links</span></div>
+        <div class="win-body">
+          <div class="win-row"><span class="k">$</span><span class="v">parser parse "b23.tv/..."</span></div>
+          <div class="win-row"><span class="k"></span><span style="color:var(--muted)">1 video · HTML5 progressive</span><span style="margin-left:auto;color:var(--success)">✓</span></div>
+          <div class="win-row"><span class="k"></span><span style="color:var(--muted)">links copied to clipboard</span><span style="margin-left:auto;color:var(--success)">✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 三平台入口 ==================== -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="sec-head reveal">
+      <h2>选择平台，<br><span class="dim">进入独立解析入口。</span></h2>
+      <span class="count">03 / PLATFORMS</span>
+    </div>
+
+    <div class="entries">
+      <a class="entry reveal" href="/douyin">
+        <span class="entry-icon icon-dy" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" fill="#fff"/></svg>
+        </span>
+        <h3>抖音</h3>
+        <p>短视频、图文图集、实况照片与背景音乐，支持高清原片下载。</p>
+        <div class="entry-tags">
+          <span>高清</span><span>H.264</span><span>实况照片</span>
+        </div>
+        <span class="entry-go"><span class="t">进入解析</span></span>
+      </a>
+
+      <a class="entry reveal" href="/kuaishou">
+        <span class="entry-icon icon-ks" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M18.315 12.264c2.33 0 4.218 1.88 4.218 4.2V19.8c0 2.32-1.888 4.2-4.218 4.2h-6.202a4.218 4.218 0 0 1-4.023-2.938l-3.676 1.833a2.04 2.04 0 0 1-2.731-.903 2.015 2.015 0 0 1-.216-.907v-5.94a2.03 2.03 0 0 1 2.035-2.024 2.044 2.044 0 0 1 .919.218l3.673 1.85a4.218 4.218 0 0 1 4.02-2.925zm-.062 2.162h-6.078c-1.153 0-2.09.921-2.108 2.065v3.247c0 1.148.925 2.081 2.073 2.1h6.113c1.153 0 2.09-.922 2.109-2.065v-3.247a2.104 2.104 0 0 0-2.074-2.1zM4.18 15.72a.554.554 0 0 0-.555.542v3.734a.556.556 0 0 0 .798.496l.01-.004 3.463-1.756V17.51l-3.467-1.73a.557.557 0 0 0-.249-.06zM9.28 0a5.667 5.667 0 0 1 4.98 2.965 4.921 4.921 0 0 1 3.36-1.317c2.714 0 4.913 2.177 4.913 4.863 0 2.686-2.2 4.863-4.912 4.863a4.921 4.921 0 0 1-3.996-2.034 5.651 5.651 0 0 1-4.345 2.034c-3.131 0-5.67-2.546-5.67-5.687C3.61 2.546 6.149 0 9.28 0Zm8.34 3.926c-1.441 0-2.61 1.157-2.61 2.585s1.169 2.585 2.61 2.585c1.443 0 2.612-1.157 2.612-2.585s-1.169-2.585-2.611-2.585zM9.28 2.287a3.395 3.395 0 0 0-3.39 3.4c0 1.877 1.518 3.4 3.39 3.4a3.395 3.395 0 0 0 3.39-3.4c0-1.878-1.518-3.4-3.39-3.4z" fill="#fff"/></svg>
+        </span>
+        <h3>快手</h3>
+        <p>短视频与图文图集，多路由稳定取数。</p>
+        <div class="entry-tags">
+          <span>多路由</span><span>GraphQL</span>
+        </div>
+        <span class="entry-go"><span class="t">进入解析</span></span>
+      </a>
+
+      <a class="entry reveal" href="/bilibili">
+        <span class="entry-icon icon-bl" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c0-.373.129-.689.386-.947.258-.257.574-.386.947-.386zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373Z" fill="#fff"/></svg>
+        </span>
+        <h3>哔哩哔哩</h3>
+        <p>常规视频、番剧与剧集，音视频合并的单文件流，下载即可播放。</p>
+        <div class="entry-tags">
+          <span>单文件流</span><span>番剧</span><span>剧集</span>
+        </div>
+        <span class="entry-go"><span class="t">进入解析</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 核心能力 ==================== -->
+<section class="section band">
+  <div class="container">
+    <div class="sec-head reveal">
+      <h2>三个平台，<br><span class="dim">同一套克制处理。</span></h2>
+      <span class="count">04 / FEATURES</span>
+    </div>
+
+    <div class="steps reveal">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div>
+          <h3>高清原片</h3>
+          <p>抖音自动升清至 1080p；快手直接取创作者原始图片；B站返回音视频合并的单文件流。</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div>
+          <h3>最高画质仲裁</h3>
+          <p>多路流并存时按编码、分辨率、码率、体积依次排序取优。抖音优先 H.264，避免浏览器播放异常。</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div>
+          <h3>直链复制与图片预览</h3>
+          <p>图片网格点开即灯箱预览，可左右切换；每条直链都能单独复制，也可一次性导出全部链接或格式化文本。</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div>
+          <h3>不留痕迹</h3>
+          <p>没有数据库，解析结果只在边缘节点内存里停留五分钟以服务重复请求，节点回收即消失。服务端不产生访问日志。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section class="section">
+  <div class="container">
+    <div class="sec-head reveal" style="justify-content:center;">
+      <h2>常见疑问，<span class="dim">先答为敬。</span></h2>
+    </div>
+
+    <div class="faq reveal">
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq1">
+          <span class="mono">01</span>
+          <span>为什么只支持三个平台？</span>
+          <span class="ind" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="faq1"><div class="faq-a-inner">
+          与其把十几个平台都做到「勉强能用」，不如把最常用的三个做到稳定可靠。这三个平台的解析链路都经过了针对性优化。
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq2">
+          <span class="mono">02</span>
+          <span>解析失败怎么办？</span>
+          <span class="ind" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="faq2"><div class="faq-a-inner">
+          多数情况是内容本身已失效，或需要登录态才能访问。可在 Cloudflare Pages 的环境变量中配置对应的 Cookie 提升成功率。若提示作品已删除或仅自己可见，则属终态，重试无效。
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq3">
+          <span class="mono">03</span>
+          <span>为什么没有一键打包下载？</span>
+          <span class="ind" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="faq3"><div class="faq-a-inner">
+          打包会在边缘节点上把所有图片先下载一遍再压缩，既慢又容易失败。现在改为：图片点开即可预览，直链可单条复制、批量复制或格式化复制，交给你惯用的下载工具处理。视频仍保留直接下载按钮。
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq4">
+          <span class="mono">04</span>
+          <span>我的链接会被记录吗？</span>
+          <span class="ind" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="faq4"><div class="faq-a-inner">
+          不会。项目没有数据库，解析结果只在边缘节点的内存中短暂停留五分钟以服务重复请求，节点回收后即消失。服务端也不产生任何访问日志。
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq5">
+          <span class="mono">05</span>
+          <span>可以自己部署一份吗？</span>
+          <span class="ind" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="faq5"><div class="faq-a-inner">
+          可以。项目基于 MIT 协议开源。把仓库 Fork 到自己的 GitHub 账号，在 Cloudflare Pages 中关联该仓库，构建命令填 <code>npm install &amp;&amp; npm run build:dist</code>，输出目录填 <code>dist</code> 即可。环境变量全部可选。
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Final CTA ==================== -->
+<section class="final-cta">
+  <div class="container">
+    <h2 class="reveal">Try it <span class="grad">now</span><span class="outline">.</span></h2>
+    <div class="reveal" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <a class="btn btn-primary btn-lg" href="/douyin">抖音</a>
+      <a class="btn btn-outline btn-lg" href="/kuaishou">快手</a>
+      <a class="btn btn-outline btn-lg" href="/bilibili">哔哩哔哩</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 免责 ==================== -->
+<section style="padding:0 0 var(--space-7);">
+  <div class="container">
+    <p class="disclaimer">
+      本工具仅用于学习研究目的。下载的内容版权归原作者及平台所有，请勿用于商业用途或二次分发。使用者需自行承担因使用本工具产生的法律责任。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7z"/><path d="M12 2.5V21.5"/><path d="M3 7l9 4.5 9-4.5"/></svg></span><span class="brand-name">cf-media-parser</span></a>
+        <p class="footer-desc">基于 Cloudflare 边缘网络的媒体解析工具，支持抖音、快手、哔哩哔哩。</p>
+      </div>
+      <div class="footer-col">
+        <h4>平台入口</h4>
+        <ul>
+          <li><a href="/douyin">抖音解析</a></li>
+          <li><a href="/kuaishou">快手解析</a></li>
+          <li><a href="/bilibili">哔哩哔哩解析</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="https://github.com/jidanbings/cf-media-parser/blob/main/docs/architecture.md" target="_blank" rel="noopener noreferrer">架构文档</a></li>
+          <li><a href="https://github.com/jidanbings/cf-media-parser/blob/main/README.md" target="_blank" rel="noopener noreferrer">部署指南</a></li>
+          <li><a href="/api/health" target="_blank" rel="noopener noreferrer">服务状态</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>关于</h4>
+        <ul>
+          <li><a href="https://github.com/jidanbings/cf-media-parser" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="https://github.com/jidanbings/cf-media-parser/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></li>
+          <li><span>仅供学习研究</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>© 2024–2026 cf-media-parser · <span class="mono">v5.0.8</span></span>
+      <span>仅供学习研究</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/warmth.js"></script>
+<script>
+/* FAQ 手风琴（首页专用） */
+(function () {
+  'use strict';
+  document.querySelectorAll('.faq-q').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = btn.getAttribute('aria-expanded') === 'true';
+      var body = document.getElementById(btn.getAttribute('aria-controls'));
+
+      document.querySelectorAll('.faq-q[aria-expanded="true"]').forEach(function (other) {
+        if (other === btn) return;
+        other.setAttribute('aria-expanded', 'false');
+        var ob = document.getElementById(other.getAttribute('aria-controls'));
+        if (ob) ob.style.maxHeight = '0px';
+      });
+
+      btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      if (body) body.style.maxHeight = expanded ? '0px' : body.scrollHeight + 'px';
+    });
+  });
+})();
+</script>
+</body>
+</html>

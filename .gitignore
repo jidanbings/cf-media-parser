@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output (Pages deploys dist/; source code stays out of CDN)
+dist/
+_worker.js
+
+# Local deployment sync (optional: cp dist/ to parent dash/)
+../dash/
+
+# Wrangler local dev state (contains machine-specific paths & caches)
+.wrangler/
+
+# Tests (kept locally only, not published to the repo)
+tests/
+
+# OS files
+.DS_Store
+Thumbs.db

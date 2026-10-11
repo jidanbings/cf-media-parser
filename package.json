@@ -1,0 +1,22 @@
+{
+  "name": "cf-media-parser",
+  "version": "5.0.8",
+  "private": true,
+  "description": "三平台媒体解析工具（抖音/快手/B站）— Cloudflare Workers + Pages，零成本部署，无需登录",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --legal-comments=none",
+    "dev": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --watch --legal-comments=none",
+    "build:minify": "esbuild src/worker.js --bundle --format=esm --outfile=dist/_worker.js --minify --legal-comments=none",
+    "copy:dist": "node scripts/copy-dist.mjs",
+    "build:dist": "npm run build && npm run copy:dist",
+    "deploy": "npm run build:dist && node scripts/copy-dist.mjs --to-dash",
+    "gen:pages": "node scripts/gen-platform-pages.mjs",
+    "check": "node tests/check.mjs && node tests/check-parsers.mjs && node tests/test-parsers.mjs && node tests/test-render.mjs && node tests/test-top3.mjs",
+    "test": "node tests/test-parsers.mjs && node tests/test-render.mjs && node tests/test-top3.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
